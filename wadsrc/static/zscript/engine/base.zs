@@ -1083,6 +1083,15 @@ class ScriptScanner native
 	native readonly double Float;
 }
 
+struct Globals native play
+{
+	native static string, bool Get(string key);
+	native static int, bool GetInt(string key);
+	native static void Set(string key, string value);
+	native static void SetInt(string key, int value);
+	native static void Save();
+}
+
 // this struct does not exist. It is just a type for being referenced by an opaque pointer.
 struct VMFunction native version("4.10")
 {

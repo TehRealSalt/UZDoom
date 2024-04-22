@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <fstream>
 
 #include "r_defs.h"
 
@@ -80,6 +81,115 @@ EXTERN_CVAR(Bool, longsavemessages);
 FARG(shotdir, "Configuration", "Sets an alternate directory for saving screenshots.", "path",
 	"Specifies an alternate directory to use for screenshots. If this is not specified, " GAMENAME
 	" stores them in the directory indicated by the screenshot_dir CVAR.");
+
+
+TMap<FString, FString> globalStorage;
+
+void M_LoadGlobalVars(const char* filename);
+void M_SaveGlobalVars(const char* filename);
+
+
+// Quick funcs for global vars
+DEFINE_ACTION_FUNCTION(_Globals, Get)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(key);
+
+	FString *val = globalStorage.CheckKey(key);
+
+	if (numret > 0) ret[0].SetString(val != NULL ? *val : FString(""));
+	if (numret > 1) ret[1].SetInt(val != NULL);
+
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION(_Globals, GetInt)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(key);
+
+	FString* val = globalStorage.CheckKey(key);
+
+	if (numret > 0) ret[0].SetInt(val != NULL ? (int)val->ToLong() : 0);
+	if (numret > 1) ret[1].SetInt(val != NULL);
+
+	return numret;
+}
+
+
+DEFINE_ACTION_FUNCTION(_Globals, Set)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(key);
+	PARAM_STRING(value);
+
+	if (key.Len() > 0)
+	{
+		if (value.Len() == 0)
+		{
+			globalStorage.Remove(key);
+		}
+		else
+		{
+			globalStorage[key] = value;
+		}
+	}
+
+	return 0;
+}
+
+
+
+DEFINE_ACTION_FUNCTION(_Globals, SetInt)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(key);
+	PARAM_INT(value);
+
+	if (key.Len() > 0)
+	{
+		FString v;
+		v.Format("%d", value);
+		globalStorage[key] = v;
+	}
+
+	return 0;
+}
+
+
+DEFINE_ACTION_FUNCTION(_Globals, Save)
+{
+	// Save global vars from the same path as GameConfig
+	if (GameConfig != nullptr && GameConfig->GetPathName() != nullptr)
+	{
+		FString filename = GameConfig->GetPathName();
+		filename += ".globals";
+		M_SaveGlobalVars(filename.GetChars());
+	}
+	else
+	{
+		Printf(TEXTCOLOR_RED"Failed to write globals!");
+	}
+
+	return 0;
+}
+
+
+UNSAFE_CCMD(writeglobals)
+{
+	if (GameConfig != nullptr && GameConfig->GetPathName() != nullptr)
+	{
+		FString filename = GameConfig->GetPathName();
+		filename += ".globals";
+		M_SaveGlobalVars(filename.GetChars());
+	}
+	else
+	{
+		Printf(TEXTCOLOR_RED"Failed to write globals!");
+	}
+}
+
 
 static size_t ParseCommandLine (const char *args, int *argc, char **argv);
 
@@ -291,6 +401,15 @@ bool M_SaveDefaults (const char *filename)
 	{
 		GameConfig->ChangePathName (filename);
 	}
+
+	// Save global vars from the same path as GameConfig
+	if (success && GameConfig->GetPathName() != nullptr)
+	{
+		FString filename = GameConfig->GetPathName();
+		filename += ".globals";
+		M_SaveGlobalVars(filename.GetChars());
+	}
+
 	return success;
 }
 
@@ -324,6 +443,118 @@ CCMD(openconfig)
 	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()).GetChars());
 }
 
+
+// M_LoadGlobalVars
+// @Cockatrice - Simple as fu, load global vars in a silly binary format that is somewhat hard to edit
+// These variables are only used in ZScript for storing game-wide information outside of a save file and outside of CVars
+void M_LoadGlobalVars(const char* filename)
+{
+	globalStorage.Clear();
+
+	FileReader fr;
+	fr.OpenFile(filename);
+
+	const unsigned int fileSize = fr.isOpen() ? fr.GetLength() : 0;
+
+	if (!fr.isOpen() || fileSize < sizeof(uint32_t))
+		return;
+
+	const uint32_t numEntries = fr.ReadUInt32();
+	const char hash = (char)(numEntries % 256);
+	if (numEntries == 0)
+	{
+		fr.Close();
+		return;
+	}
+
+	for (uint32_t x = 0; x < numEntries && fr.isOpen() && fr.Tell() < fileSize; x++)
+	{
+		char buf[256];
+		uint8_t bufLen = 0;
+		FString key, value;
+
+		// Length of key
+		const unsigned char keyLen = fr.ReadUInt8();
+
+		// Key
+		for (int k = 0; k < keyLen && k < 255 && fr.Tell() < fileSize; k++)
+		{
+			char tpos = (char)(fr.Tell() % 256);
+			char c = fr.ReadInt8() - hash - tpos;
+			buf[bufLen++] = c;
+		}
+		buf[bufLen] = '\0';
+		key = buf;
+
+		// Length of value
+		const unsigned char valLen = fr.ReadUInt8();
+
+		// Value
+		bufLen = 0;
+		for (int k = 0; k < valLen && k < 255 && fr.Tell() < fileSize; k++)
+		{
+			char tpos = (char)(fr.Tell() % 256);
+			char c = fr.ReadInt8() - hash - tpos;
+			buf[bufLen++] = c;
+		}
+		buf[bufLen] = '\0';
+		value = buf;
+
+		if (!key.Len() == 0 && !value.Len() == 0)
+		{
+			globalStorage[key] = value;
+			Printf("Read: %s = %s\n", key.GetChars(), value.GetChars());
+		}
+	}
+
+	fr.Close();
+}
+
+
+void M_SaveGlobalVars(const char* filename)
+{
+	std::ofstream fw(filename, std::ios_base::binary | std::ios_base::out);
+
+	const uint32_t numEntries = globalStorage.CountUsed();
+	const char hash = (char)(numEntries % 256);
+	uint32_t ne = LittleLong(numEntries);
+	fw.write(reinterpret_cast<char*>(&ne), sizeof(ne));
+
+	if (numEntries == 0)
+	{
+		fw.close();
+		return;
+	}
+
+	TMapIterator<FString, FString> it(globalStorage);
+	TMap<FString, FString>::Pair* pair;
+
+	while (it.NextPair(pair))
+	{
+		unsigned char keyLen = (unsigned char)clamp(pair->Key.Len(), (size_t)0, (size_t)255);
+		unsigned char valLen = (unsigned char)clamp(pair->Value.Len(), (size_t)0, (size_t)255);
+
+		fw.write(reinterpret_cast<char*>(&keyLen), sizeof(keyLen));
+		for (char x = 0; x < keyLen; x++)
+		{
+			char tpos = (char)(fw.tellp() % 256);
+			char c = pair->Key[x] + hash + tpos;
+			fw.write(&c, sizeof(c));
+		}
+
+		fw.write(reinterpret_cast<char*>(&valLen), sizeof(valLen));
+		for (char x = 0; x < valLen; x++)
+		{
+			char tpos = (char)(fw.tellp() % 256);
+			char c = pair->Value[x] + hash + tpos;
+			fw.write(&c, sizeof(c));
+		}
+	}
+
+	fw.close();
+}
+
+
 //
 // M_LoadDefaults
 //
@@ -332,6 +563,14 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
+
+	// Load global vars from the same path as GameConfig
+	if (GameConfig->GetPathName() != nullptr)
+	{
+		FString filename = GameConfig->GetPathName();
+		filename += ".globals";
+		M_LoadGlobalVars(filename.GetChars());
+	}
 }
 
 
@@ -351,17 +590,17 @@ struct pcx_t
 	uint16_t			ymin;
 	uint16_t			xmax;
 	uint16_t			ymax;
-	
+
 	uint16_t			hdpi;
 	uint16_t			vdpi;
 
 	uint8_t				palette[48];
-	
+
 	int8_t				reserved;
 	int8_t				color_planes;
 	uint16_t			bytes_per_line;
 	uint16_t			palette_type;
-	
+
 	int8_t				filler[58];
 };
 
@@ -707,4 +946,3 @@ DEFINE_ACTION_FUNCTION_NATIVE(_CVar, SaveConfig, SaveConfig)
 	PARAM_PROLOGUE;
 	ACTION_RETURN_INT(M_SaveDefaults(nullptr));
 }
-
