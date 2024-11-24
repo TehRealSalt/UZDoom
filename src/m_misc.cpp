@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <time.h>
 #include <fstream>
+#include <filesystem>
 
 #include "r_defs.h"
 
@@ -82,11 +83,13 @@ FARG(shotdir, "Configuration", "Sets an alternate directory for saving screensho
 	"Specifies an alternate directory to use for screenshots. If this is not specified, " GAMENAME
 	" stores them in the directory indicated by the screenshot_dir CVAR.");
 
+EXTERN_CVAR(Int, developer);
 
 TMap<FString, FString> globalStorage;
 
 void M_LoadGlobalVars(const char* filename);
-void M_SaveGlobalVars(const char* filename);
+bool M_SaveGlobalVars(const char* filename);
+void M_ReadGlobalVars(FileReader& fr, TMap<FString, FString>& map);
 
 
 // Quick funcs for global vars
@@ -182,9 +185,9 @@ DEFINE_ACTION_FUNCTION(_Globals, Save)
 	// Save global vars from the same path as GameConfig
 	if (GameConfig != nullptr && GameConfig->GetPathName() != nullptr)
 	{
-		FString filename = GameConfig->GetPathName();
-		filename += ".globals";
-		M_SaveGlobalVars(filename.GetChars());
+		FString path = M_GetSavegamesPath();
+		path += GAMENAMELOWERCASE".globals"; // [Sal] TODO: Do this per-mod
+		M_SaveGlobalVars(path.GetChars());
 	}
 	else
 	{
@@ -197,11 +200,11 @@ DEFINE_ACTION_FUNCTION(_Globals, Save)
 
 UNSAFE_CCMD(writeglobals)
 {
-	if (GameConfig != nullptr && GameConfig->GetPathName() != nullptr)
+	FString path = M_GetSavegamesPath();
+	path += GAMENAMELOWERCASE".globals"; // [Sal] TODO: Do this per-mod
+	if (M_SaveGlobalVars(path.GetChars()))
 	{
-		FString filename = GameConfig->GetPathName();
-		filename += ".globals";
-		M_SaveGlobalVars(filename.GetChars());
+		Printf(TEXTCOLOR_BLUE"Wrote globals to: %s", path.GetChars());
 	}
 	else
 	{
@@ -421,12 +424,12 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ChangePathName (filename);
 	}
 
-	// Save global vars from the same path as GameConfig
-	if (success && GameConfig->GetPathName() != nullptr)
+	// Save global vars from the same path as save games
+	if (success)
 	{
-		FString filename = GameConfig->GetPathName();
-		filename += ".globals";
-		M_SaveGlobalVars(filename.GetChars());
+		FString path = M_GetSavegamesPath();
+		path += GAMENAMELOWERCASE".globals"; // [Sal] TODO: Do this per-mod
+		M_SaveGlobalVars(path.GetChars());
 	}
 
 	return success;
@@ -470,9 +473,16 @@ void M_LoadGlobalVars(const char* filename)
 {
 	globalStorage.Clear();
 
+	Printf("Loading Globals...\n");
 	FileReader fr;
 	fr.OpenFile(filename);
+	M_ReadGlobalVars(fr, globalStorage);
+	fr.Close();
+}
 
+
+void M_ReadGlobalVars(FileReader& fr, TMap<FString, FString>& map)
+{
 	const unsigned int fileSize = fr.isOpen() ? fr.GetLength() : 0;
 
 	if (!fr.isOpen() || fileSize < sizeof(uint32_t))
@@ -521,18 +531,19 @@ void M_LoadGlobalVars(const char* filename)
 
 		if (!key.Len() == 0 && !value.Len() == 0)
 		{
-			globalStorage[key] = value;
-			Printf("Read: %s = %s\n", key.GetChars(), value.GetChars());
+			map[key] = value;
+			if (developer)
+				Printf("Globals Read: %s = %s\n", key.GetChars(), value.GetChars());
 		}
 	}
-
-	fr.Close();
 }
 
 
-void M_SaveGlobalVars(const char* filename)
+bool M_SaveGlobalVars(const char* filename)
 {
 	std::ofstream fw(filename, std::ios_base::binary | std::ios_base::out);
+
+	if (!fw.is_open()) return false;
 
 	const uint32_t numEntries = globalStorage.CountUsed();
 	const char hash = (char)(numEntries % 256);
@@ -542,7 +553,7 @@ void M_SaveGlobalVars(const char* filename)
 	if (numEntries == 0)
 	{
 		fw.close();
-		return;
+		return true;
 	}
 
 	TMapIterator<FString, FString> it(globalStorage);
@@ -571,6 +582,8 @@ void M_SaveGlobalVars(const char* filename)
 	}
 
 	fw.close();
+
+	return true;
 }
 
 
@@ -583,13 +596,9 @@ void M_LoadDefaults ()
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
 
-	// Load global vars from the same path as GameConfig
-	if (GameConfig->GetPathName() != nullptr)
-	{
-		FString filename = GameConfig->GetPathName();
-		filename += ".globals";
-		M_LoadGlobalVars(filename.GetChars());
-	}
+	FString path = M_GetSavegamesPath();
+	path += GAMENAMELOWERCASE".globals"; // [Sal] TODO: Do this per-mod
+	M_LoadGlobalVars(path.GetChars());
 }
 
 
