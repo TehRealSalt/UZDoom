@@ -792,12 +792,12 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 #endif
 
 		I_FatalError(
-			"Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
+			"Cannot find the game IWAD (snapgame.ipk3).\n"
 			"Did you install " GAMENAME " properly? You can do either of the following:\n"
 			"\n"
-			"1. Place one or more of these wads in %s\n"
+			"1. Place the IWAD in %s\n"
 			"2. Edit your %s and add the\n"
-			"directories of your iwads to the list beneath [IWADSearch.Directories]"
+			"directories of the IWAD to the list beneath [IWADSearch.Directories]"
 			"%s\n",
 			gamedir, cfgfile, extrasteps
 		);
