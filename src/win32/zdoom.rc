@@ -68,14 +68,14 @@ BEGIN
     "        BLOCK ""040904b0""\r\n"
     "        BEGIN\r\n"
     "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
-    "            VALUE ""CompanyName"", "" ""\r\n"
-    "            VALUE ""FileDescription"", ""GZDoom""\r\n"
+    "            VALUE ""CompanyName"", ""Doghouse Games""\r\n"
+    "            VALUE ""FileDescription"", ""Snap the Sentinel""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
-    "            VALUE ""InternalName"", ""GZDoom""\r\n"
-    "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
+    "            VALUE ""InternalName"", ""SnapGame""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996 id Software, 1998-2017 Marisa Heit, 2002-2025 Christoph Oelckers, 2025 UZDoom Team, 2020-2025 Doghouse Games, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
-    "            VALUE ""OriginalFilename"", ""gzdoom.exe""\r\n"
-    "            VALUE ""ProductName"", ""GZDoom""\r\n"
+    "            VALUE ""OriginalFilename"", ""snapgame.exe""\r\n"
+    "            VALUE ""ProductName"", ""Snap the Sentinel""\r\n"
     "            VALUE ""ProductVersion"", GIT_VERSION\r\n"
     "        END\r\n"
     "    END\r\n"
@@ -206,7 +206,7 @@ END
 IDD_CRASHDIALOG DIALOGEX 0, 0, 415, 308
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
-CAPTION "GZDoom Very Fatal Error"
+CAPTION "Snap the Sentinel Very Fatal Error"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     CONTROL         "",IDC_CRASHTAB,"SysTabControl32",WS_TABSTOP,4,4,404,280
@@ -315,14 +315,14 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
-            VALUE "CompanyName", " "
-            VALUE "FileDescription", "GZDoom " GIT_DESCRIPTION
+            VALUE "CompanyName", "Doghouse Games"
+            VALUE "FileDescription", "Snap the Sentinel " GIT_DESCRIPTION
             VALUE "FileVersion", RC_FILEVERSION2
-            VALUE "InternalName", "GZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
+            VALUE "InternalName", "SnapGame"
+            VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1998-2017 Marisa Heit, 2002-2025 Christoph Oelckers, 2025 UZDoom Team, 2020-2025 Doghouse Games, et al."
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
-            VALUE "OriginalFilename", "gzdoom.exe"
-            VALUE "ProductName", "GZDoom"
+            VALUE "OriginalFilename", "snapgame.exe"
+            VALUE "ProductName", "Snap the Sentinel"
             VALUE "ProductVersion", GIT_DESCRIPTION
         END
     END

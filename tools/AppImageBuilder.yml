@@ -4,16 +4,16 @@ version: 1
 
 AppDir:
   app_info:
-    id: org.zdoom.GZDoom
-    name: GZDoom
-    icon: org.zdoom.GZDoom
+    id: net.snapgame.SnapGame
+    name: SnapGame
+    icon: net.snapgame.SnapGame
     version: '{{GIT_DESCRIBE}}'
-    exec: ./usr/bin/gzdoom
+    exec: ./usr/bin/snapgame
     exec_args: $@
 
   runtime:
     path_mappings:
-      - /usr/share/games/doom:$APPDIR/usr/share/games/doom
+      - /usr/share/games/snapgame:$APPDIR/usr/share/games/snapgame
 
   files:
     include:

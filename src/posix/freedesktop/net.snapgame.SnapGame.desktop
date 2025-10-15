@@ -1,0 +1,23 @@
+[Desktop Entry]
+Name=Snap the Sentinel
+Comment=Multi-game launcher for Doom era games
+Icon=net.snapgame.SnapGame
+Categories=Game;Shooter;
+Exec=snapgame %F
+StartupNotify=true
+PrefersNonDefaultGPU=true
+Terminal=false
+Type=Application
+Keywords=SnapGame;pwad;iwad;first;person;shooter;
+MimeType=application/x-doom-wad;application/x-doom-pk7;application/x-doom-pk3;
+Actions=launch;launch-safemode;
+
+[Desktop Action launch]
+Name=Launch Snap the Sentinel
+Icon=net.snapgame.SnapGame
+Exec=snapgame -iwad snapgame.ipk3 %F
+
+[Desktop Action launch-safemode]
+Name=Snap the Sentinel Safemode
+Icon=net.snapgame.SnapGame
+Exec=snapgame -iwad snapgame.ipk3 -noautoload -noautoexec %F

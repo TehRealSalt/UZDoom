@@ -27,7 +27,7 @@ if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
 endif()
 
-option( ZDOOM_ENABLE_SWR "Enable software renderer" ON )
+option( ZDOOM_ENABLE_SWR "Enable software renderer" OFF )
 if( NOT ZDOOM_ENABLE_SWR )
 	add_definitions( -DNO_SWRENDERER )
 endif()
@@ -526,7 +526,7 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-option( SEND_ANON_STATS "Enable sending of anonymous hardware statistics" ON )
+option( SEND_ANON_STATS "Enable sending of anonymous hardware statistics" OFF )
 
 if( NOT SEND_ANON_STATS )
 	add_definitions( -DNO_SEND_STATS )
@@ -1462,16 +1462,16 @@ install(DIRECTORY "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_b
 
 # Install Linux desktop launcher, icon and metadata
 if( UNIX AND NOT APPLE )
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.desktop
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/net.snapgame.SnapGame.desktop
 			DESTINATION share/applications
 			PERMISSIONS WORLD_EXECUTE WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE OWNER_EXECUTE)
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.metainfo.xml
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/net.snapgame.SnapGame.metainfo.xml
 			DESTINATION share/metainfo
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom.svg
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/net.snapgame.SnapGame.svg
 			DESTINATION share/icons/hicolor/scalable/apps
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/org.zdoom.GZDoom-mime.xml
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/posix/freedesktop/net.snapgame.SnapGame-mime.xml
 			DESTINATION share/mime/packages
 			PERMISSIONS WORLD_READ GROUP_READ GROUP_EXECUTE OWNER_READ OWNER_WRITE)
 	# note:
@@ -1499,7 +1499,7 @@ if( APPLE )
 	set_target_properties(zdoom PROPERTIES
 		LINK_FLAGS "${LINK_FRAMEWORKS}"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist"
-		XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.drdteam.gzdoom"
+		XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "net.snapgame.SnapGame"
 		XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "" )
 
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()

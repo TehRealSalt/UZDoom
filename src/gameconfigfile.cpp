@@ -123,16 +123,16 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
-		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
-		// Arch Linux likes them in /usr/share/doom
-		// Debian likes them in /usr/share/games/doom
+		SetValueForKey ("Path", "$HOME/.local/share/games/snapgame", true);
+		// Arch Linux likes them in /usr/share/snapgame
+		// Debian likes them in /usr/share/games/snapgame
 		// I assume other distributions don't do anything radically different
-		SetValueForKey ("Path", "/usr/local/share/doom", true);
-		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
-		SetValueForKey ("Path", "/usr/share/doom", true);
-		SetValueForKey ("Path", "/usr/share/games/doom", true);
-		SetValueForKey ("Path", SHARE_DIR "/doom", true);
-		SetValueForKey ("Path", SHARE_DIR "/games/doom", true);
+		SetValueForKey ("Path", "/usr/local/share/snapgame", true);
+		SetValueForKey ("Path", "/usr/local/share/games/snapgame", true);
+		SetValueForKey ("Path", "/usr/share/snapgame", true);
+		SetValueForKey ("Path", "/usr/share/games/snapgame", true);
+		SetValueForKey ("Path", SHARE_DIR "/snapgame", true);
+		SetValueForKey ("Path", SHARE_DIR "/games/snapgame", true);
 
 #endif
 	}
@@ -150,14 +150,14 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
 		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
-		SetValueForKey ("Path", "$HOME/.local/share/games/doom", true);
+		SetValueForKey ("Path", "$HOME/.local/share/games/snapgame", true);
 		SetValueForKey ("Path", SHARE_DIR, true);
-		SetValueForKey ("Path", SHARE_DIR "/doom", true);
-		SetValueForKey ("Path", SHARE_DIR "/games/doom", true);
-		SetValueForKey ("Path", "/usr/local/share/doom", true);
-		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
-		SetValueForKey ("Path", "/usr/share/doom", true);
-		SetValueForKey ("Path", "/usr/share/games/doom", true);
+		SetValueForKey ("Path", SHARE_DIR "/snapgame", true);
+		SetValueForKey ("Path", SHARE_DIR "/games/snapgame", true);
+		SetValueForKey ("Path", "/usr/local/share/snapgame", true);
+		SetValueForKey ("Path", "/usr/local/share/games/snapgame", true);
+		SetValueForKey ("Path", "/usr/share/snapgame", true);
+		SetValueForKey ("Path", "/usr/share/games/snapgame", true);
 #endif
 		SetValueForKey ("Path", "$DOOMWADDIR", true);
 	}
@@ -181,20 +181,20 @@ FGameConfigFile::FGameConfigFile ()
 #else
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
 		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
-		SetValueForKey("Path", "$HOME/.local/share/games/doom/soundfonts", true);
-		SetValueForKey("Path", "$HOME/.local/share/games/doom/fm_banks", true);
-		SetValueForKey("Path", "/usr/local/share/doom/soundfonts", true);
-		SetValueForKey("Path", "/usr/local/share/doom/fm_banks", true);
-		SetValueForKey("Path", "/usr/local/share/games/doom/soundfonts", true);
-		SetValueForKey("Path", "/usr/local/share/games/doom/fm_banks", true);
-		SetValueForKey("Path", "/usr/share/doom/soundfonts", true);
-		SetValueForKey("Path", "/usr/share/doom/fm_banks", true);
-		SetValueForKey("Path", "/usr/share/games/doom/soundfonts", true);
-		SetValueForKey("Path", "/usr/share/games/doom/fm_banks", true);
-		SetValueForKey("Path", SHARE_DIR "/doom/soundfonts", true);
-		SetValueForKey("Path", SHARE_DIR "/doom/fm_banks", true);
-		SetValueForKey("Path", SHARE_DIR "/games/doom/soundfonts", true);
-		SetValueForKey("Path", SHARE_DIR "/games/doom/fm_banks", true);
+		SetValueForKey("Path", "$HOME/.local/share/games/snapgame/soundfonts", true);
+		SetValueForKey("Path", "$HOME/.local/share/games/snapgame/fm_banks", true);
+		SetValueForKey("Path", "/usr/local/share/snapgame/soundfonts", true);
+		SetValueForKey("Path", "/usr/local/share/snapgame/fm_banks", true);
+		SetValueForKey("Path", "/usr/local/share/games/snapgame/soundfonts", true);
+		SetValueForKey("Path", "/usr/local/share/games/snapgame/fm_banks", true);
+		SetValueForKey("Path", "/usr/share/snapgame/soundfonts", true);
+		SetValueForKey("Path", "/usr/share/snapgame/fm_banks", true);
+		SetValueForKey("Path", "/usr/share/games/snapgame/soundfonts", true);
+		SetValueForKey("Path", "/usr/share/games/snapgame/fm_banks", true);
+		SetValueForKey("Path", SHARE_DIR "/snapgame/soundfonts", true);
+		SetValueForKey("Path", SHARE_DIR "/snapgame/fm_banks", true);
+		SetValueForKey("Path", SHARE_DIR "/games/snapgame/soundfonts", true);
+		SetValueForKey("Path", SHARE_DIR "/games/snapgame/fm_banks", true);
 		SetValueForKey("Path", "/usr/share/soundfonts", true);
 #endif
 	}

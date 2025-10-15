@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component type="desktop-application">
+  <id>net.snapgame.SnapGame</id>
+  <launchable type="desktop-id">net.snapgame.SnapGame.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
+
+  <name>GZDoom</name>
+  <developer id="net.snapgame.SnapGame">
+    <name>Doghouse Games</name>
+    <url>https://www.snapgame.net/doghouse</url>
+  </developer>
+  <summary>TODO: Snap summary</summary>
+
+  <url type="homepage">https://www.snapgame.net/</url>
+  <url type="bugtracker">https://github.com/TehRealSalt/UZDoom/issues</url>
+  <url type="contact">mailto:help@snapgame.net</url>
+  <url type="vcs-browser">https://github.com/TehRealSalt/UZDoom</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#999999</color>
+    <color type="primary" scheme_preference="dark">#222222</color>
+  </branding>
+
+  <description>
+    <p>TODO: Snap the Sentinel description</p>
+    <p>For the Flatpak distribution of Snap the Sentinel, all file access is restricted to
+      <code>~/.var/app/net.snapgame.SnapGame/.config/snapgame</code> by default for security reasons.
+      You will need to place your IWADs and PWADS there, or use an application like Flatseal
+      to give Snap the Sentinel additional permissions.</p>
+  </description>
+
+  <supports>
+    <control>gamepad</control>
+  </supports>
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </recommends>
+  <provides>
+    <binary>snapgame</binary>
+  </provides>
+
+  <keywords>
+    <keyword>retro</keyword>
+    <keyword>fps</keyword>
+    <keyword>vulkan</keyword>
+    <keyword>shooter</keyword>
+    <keyword>sourceport</keyword>
+    <keyword>doom</keyword>
+  </keywords>
+
+  <categories>
+    <category>Game</category>
+    <category>Shooter</category>
+  </categories>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-fantasy">intense</content_attribute>
+  </content_rating>
+
+</component>
