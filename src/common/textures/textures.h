@@ -82,6 +82,7 @@ enum MaterialShaderIndex
 	SHADER_NoiseFuzz,
 	SHADER_SmoothNoiseFuzz,
 	SHADER_SoftwareFuzz,
+	SHADER_Tug,
 	FIRST_USER_SHADER
 };
 
@@ -407,5 +408,3 @@ public:
 
 #include "gametexture.h"
 #endif
-
-

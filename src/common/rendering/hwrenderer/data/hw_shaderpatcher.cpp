@@ -306,6 +306,7 @@ const FDefaultShader defaultshaders[] =
 	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Tug", "shaders/glsl/tug.fp", "shaders/glsl/material_normal.fp", ""},
 	{nullptr,nullptr,nullptr,nullptr}
 };
 
@@ -325,4 +326,3 @@ int DFrameBuffer::GetShaderCount()
 
 	return MAX_PASS_TYPES * (countof(defaultshaders) - 1 + usershaders.Size() + MAX_EFFECTS + SHADER_NoTexture);
 }
-

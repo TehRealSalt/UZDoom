@@ -219,7 +219,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
 //
 //==========================================================================
 
-int F2DDrawer::AddCommand(RenderCommand *data) 
+int F2DDrawer::AddCommand(RenderCommand *data)
 {
 	data->mScreenFade = screenFade;
 	if (mData.Size() > 0 && data->isCompatible(mData.Last()))
@@ -306,6 +306,11 @@ bool F2DDrawer::SetStyle(FGameTexture *tex, DrawParms &parms, PalEntry &vertexco
 	else if (style.BlendOp == STYLEOP_FuzzOrRevSub)
 	{
 		style.BlendOp = STYLEOP_RevSub;
+	}
+
+	if (style.BlendOp == STYLEOP_Tug)
+	{
+		style.BlendOp = STYLEOP_Add;
 	}
 
 	stencilling = false;
@@ -730,7 +735,7 @@ void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 	poly.mFlags |= DTF_Wrap;
 	poly.mDesaturate = colormap.Desaturation;
 
-	PalEntry color0; 
+	PalEntry color0;
 	double invfade = 1. - fadelevel;
 
 	color0.r = uint8_t(colormap.LightColor.r * invfade);
@@ -998,8 +1003,8 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 
 
 //===========================================================================
-// 
-// 
+//
+//
 //
 //===========================================================================
 

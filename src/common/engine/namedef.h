@@ -30,6 +30,7 @@ xx(FillColor)
 xx(ColorBlend)
 xx(ColorAdd)
 xx(Multiply)
+xx(Tug)
 
 // Special names for compiler backend
 xx(Name)

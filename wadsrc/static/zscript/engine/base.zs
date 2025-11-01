@@ -103,6 +103,7 @@ enum ERenderStyle
 	STYLE_Source,			// No blending (only used internally)
 	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
 
+	STYLE_Tug, // SNAPGAME: Additive above 50%, subtractive below 50% (TODO: better name)
 };
 
 enum EGameState

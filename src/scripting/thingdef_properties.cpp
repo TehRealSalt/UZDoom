@@ -415,7 +415,7 @@ int CheckDeprecatedFlags(AActor *actor, int index)
 
 	case DEPF_HEXENBOUNCE:
 		return (actor->BounceFlags & (BOUNCE_TypeMask|BOUNCE_UseSeeSound)) == BOUNCE_HexenCompat;
-	
+
 	case DEPF_DOOMBOUNCE:
 		return (actor->BounceFlags & (BOUNCE_TypeMask|BOUNCE_UseSeeSound)) == BOUNCE_DoomCompat;
 
@@ -447,7 +447,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, CheckDeprecatedFlags, CheckDeprecatedFlag
 
 //==========================================================================
 //
-// 
+//
 //
 //==========================================================================
 int MatchString (const char *in, const char **strings)
@@ -765,15 +765,15 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
 	static const char * renderstyles[]={
-		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL", 
-		"TRANSLUCENT", "ADD", "SHADED", "SHADOW", "SUBTRACT", "ADDSTENCIL", 
-		"ADDSHADED", "COLORBLEND", "COLORADD", "MULTIPLY", NULL };
+		"NONE", "NORMAL", "FUZZY", "SOULTRANS", "OPTFUZZY", "STENCIL",
+		"TRANSLUCENT", "ADD", "SHADED", "SHADOW", "SUBTRACT", "ADDSTENCIL",
+		"ADDSHADED", "COLORBLEND", "COLORADD", "MULTIPLY", "TUG", NULL };
 
 	static const int renderstyle_values[]={
 		STYLE_None, STYLE_Normal, STYLE_Fuzzy, STYLE_SoulTrans, STYLE_OptFuzzy,
 			STYLE_TranslucentStencil, STYLE_Translucent, STYLE_Add, STYLE_Shaded,
 			STYLE_Shadow, STYLE_Subtract, STYLE_AddStencil, STYLE_AddShaded,
-			STYLE_ColorBlend, STYLE_ColorAdd, STYLE_Multiply};
+			STYLE_ColorBlend, STYLE_ColorAdd, STYLE_Multiply, STYLE_Tug};
 
 	// make this work for old style decorations, too.
 	if (!strnicmp(str, "style_", 6)) str+=6;
@@ -808,7 +808,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 		}
 		defaults->Translation = TRANSLATION(TRANSLATION_Standard, trans);
 	}
-	else 
+	else
 	{
 		FRemapTable CurrentTranslation;
 
@@ -1075,7 +1075,7 @@ DEFINE_PROPERTY(clearflags, 0, Actor)
 DEFINE_PROPERTY(monster, 0, Actor)
 {
 	// sets the standard flags for a monster
-	defaults->flags|=MF_SHOOTABLE|MF_COUNTKILL|MF_SOLID; 
+	defaults->flags|=MF_SHOOTABLE|MF_COUNTKILL|MF_SOLID;
 	defaults->flags2|=MF2_PUSHWALL|MF2_MCROSS|MF2_PASSMOBJ;
 	defaults->flags3|=MF3_ISMONSTER;
 	defaults->flags4|=MF4_CANUSEWALLS;
@@ -1087,7 +1087,7 @@ DEFINE_PROPERTY(monster, 0, Actor)
 DEFINE_PROPERTY(projectile, 0, Actor)
 {
 	// sets the standard flags for a projectile
-	defaults->flags|=MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE; 
+	defaults->flags|=MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE;
 	defaults->flags2|=MF2_IMPACT|MF2_PCROSS|MF2_NOTELEPORT;
 	if (gameinfo.gametype&GAME_Raven) defaults->flags5|=MF5_BLOODSPLATTER;
 }
@@ -1250,7 +1250,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 		icon = TexMan.CheckForTexture(i, ETextureType::MiscPatch);
 		if (!icon.isValid())
 		{
-			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
+			// Don't print warnings if the item is for another game or if this is a shareware IWAD.
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
 			if ((bag.Info->ActorInfo()->GameFilter == GAME_Any || bag.Info->ActorInfo()->GameFilter & gameinfo.gametype) &&
 				!(gameinfo.flags&GI_SHAREWARE) && fileSystem.GetFileContainer(bag.Lumpnum) != 0)
@@ -1445,7 +1445,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 {
 	PROP_STRING_PARM(str, 0);
 
-	// Yuck! What was I thinking when I decided to prepend "Power" to the name? 
+	// Yuck! What was I thinking when I decided to prepend "Power" to the name?
 	// Now it's too late to change it...
 	PClassActor *cls = PClass::FindActor(str);
 	auto pow = PClass::FindActor(NAME_Powerup);
@@ -1648,7 +1648,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 		PROP_INT_PARM(val, 1);
 		if (val > 0) SpawnMask |= 1<<(val-1);
 	}
-	else 
+	else
 	{
 		for(int i=1; i<PROP_PARM_COUNT; i++)
 		{
@@ -1936,13 +1936,11 @@ DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
 	PROP_STRING_PARM(str, 0);
 	static const char * ltype_names[]={
 		"Point","Pulse","Flicker","Sector","RandomFlicker", "ColorPulse", "ColorFlicker", "RandomColorFlicker", nullptr};
-	
+
 	static const int ltype_values[]={
 		PointLight, PulseLight, FlickerLight, SectorLight, RandomFlickerLight, ColorPulseLight, ColorFlickerLight, RandomColorFlickerLight };
-	
+
 	int style = MatchString(str, ltype_names);
 	if (style < 0) I_Error("Unknown light type '%s'", str);
 	defaults->IntVar(NAME_lighttype) = ltype_values[style];
 }
-
-

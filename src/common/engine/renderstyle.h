@@ -77,6 +77,8 @@ enum ERenderStyle : int
 	STYLE_Source,			// No blending (only used internally)
 	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
 
+	STYLE_Tug,				// SNAPGAME: Add above 50%, subtract below 50%
+
 	STYLE_Count
 };
 
@@ -93,7 +95,8 @@ enum ERenderOp
 	STYLEOP_FuzzOrRevSub,	// Draw fuzzy or reverse subtract, based on user preference
 
 	// special styles
-	STYLEOP_Shadow,			
+	STYLEOP_Shadow,
+	STYLEOP_Tug,
 };
 
 enum ERenderAlpha
@@ -182,4 +185,3 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 	*this = LegacyRenderStyles[legacy];
 	return *this;
 }
-
