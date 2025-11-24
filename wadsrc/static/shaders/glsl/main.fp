@@ -65,6 +65,88 @@ const int TEXF_ClampY = 0x80000;
 
 //===========================================================================
 //
+// Snap the Sentinel light functions
+//
+//===========================================================================
+
+float SnapBrightest(vec3 base)
+{
+	return max(max(base.g, base.b), base.r);
+}
+
+float SnapDarkest(vec3 base)
+{
+	return min(min(base.g, base.b), base.r);
+}
+
+float SnapSaturation(vec3 base)
+{
+	return SnapBrightest(base) - SnapDarkest(base);
+}
+
+float SnapLuminosity(vec3 base)
+{
+	return sqrt((base.r * base.r) + (base.g * base.g) + (base.b * base.b));
+}
+
+vec3 SnapLightMix(vec3 BaseColor, vec3 FogColor, float FogStrength)
+{
+	vec3 Diff = abs(BaseColor - FogColor);
+	float Intensity = SnapBrightest(BaseColor) * FogStrength;
+
+	vec3 ChannelMix = ((vec3(0.0, 0.288, -0.185)) * 0.35) + 0.5;
+
+	vec3 delta = vec3(-0.25);
+	vec3 aNum = ChannelMix - vec3(0.5);
+	vec3 bNum = vec3(0.25) - ChannelMix;
+	vec3 a = aNum / delta;
+	vec3 b = bNum / delta;
+
+	vec3 MixAmt = (a * (Intensity * Intensity)) + (b * Intensity);
+
+	return clamp(
+		BaseColor - (min(MixAmt, Diff) * sign(BaseColor - FogColor)),
+		0.0, 1.0
+	);
+}
+
+vec3 SnapApplyLight(vec3 BaseTextureColor, vec3 LightColor)
+{
+	float Darkness = 1.0 - SnapDarkest(LightColor.rgb);
+	vec3 FadeTo = LightColor.rgb * SnapSaturation(LightColor.rgb);
+	return SnapLightMix(BaseTextureColor.rgb, FadeTo, Darkness);
+}
+
+#define SNAP_CEL_LIGHT_STEPS (3)
+float SnapCelLightAttenuation(float Atten)
+{
+	return clamp(ceil(Atten * SNAP_CEL_LIGHT_STEPS) * 0.5, 0.0, 1.0);
+}
+
+#define SNAP_DYN_LIGHT_FACTOR (0.5)
+#define SNAP_DYN_LIGHT_MAX (1.4)
+vec3 SnapApplyDynamicLight(vec3 BaseColor, vec3 LightColor)
+{
+	vec3 LightAbs = abs(LightColor);
+	float Strength = (SnapDarkest(LightAbs) + SnapSaturation(LightAbs)) * SNAP_DYN_LIGHT_FACTOR;
+	vec3 RawColor = LightAbs * (1.0 / max(0.001, SnapBrightest(LightAbs)));
+	float Dir = sign(LightColor.r + LightColor.g + LightColor.b);
+	return clamp(BaseColor + (RawColor * Strength * Dir), 0.0, SNAP_DYN_LIGHT_MAX);
+}
+
+#define SNAP_GLOW_STRENGTH_BASE (0.5)
+#define SNAP_GLOW_STRENGTH_MUL (1.0)
+#define SNAP_GLOW_STEPS (8)
+vec3 SnapApplyGlow(vec3 BaseColor, vec3 GlowColor, float Strength)
+{
+	Strength = (ceil(Strength * SNAP_GLOW_STEPS) - 0.5) / SNAP_GLOW_STEPS;
+	Strength *= (SnapDarkest(GlowColor) + SnapSaturation(GlowColor)) * SNAP_DYN_LIGHT_FACTOR;
+	Strength *= SNAP_GLOW_STRENGTH_BASE + ((1.0 - SnapDarkest(BaseColor)) * SNAP_GLOW_STRENGTH_MUL);
+	return clamp(BaseColor + (GlowColor * Strength), 0.0, 1.0); // SNAP_DYN_LIGHT_MAX
+}
+
+//===========================================================================
+//
 // RGB to HSV
 //
 //===========================================================================
@@ -734,30 +816,12 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 		color.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogfactor);
 	}
 
-	//
-	// handle glowing walls
-	//
-	if (uGlowTopColor.a > 0.0 && glowdist.x < uGlowTopColor.a)
-	{
-		color.rgb += desaturate(uGlowTopColor * (1.0 - glowdist.x / uGlowTopColor.a)).rgb;
-	}
-	if (uGlowBottomColor.a > 0.0 && glowdist.y < uGlowBottomColor.a)
-	{
-		color.rgb += desaturate(uGlowBottomColor * (1.0 - glowdist.y / uGlowBottomColor.a)).rgb;
-	}
-	color = min(color, 1.0);
-
 	// these cannot be safely applied by the legacy format where the implementation cannot guarantee that the values are set.
 #if !defined LEGACY_USER_SHADER && !defined NO_LAYERS
 	//
 	// apply glow
 	//
 	color.rgb = mix(color.rgb, material.Glow.rgb, material.Glow.a);
-
-	//
-	// apply brightmaps
-	//
-	color.rgb = min(color.rgb + material.Bright.rgb, 1.0);
 #endif
 
 	//
@@ -776,7 +840,36 @@ vec4 getLightColor(Material material, float fogdist, float fogfactor)
 	//
 	// apply dynamic lights
 	//
-	return vec4(ProcessMaterialLight(material, color.rgb), material.Base.a * vColor.a);
+	color.rgb = ProcessMaterialLight(material, color.rgb);
+
+	//
+	// handle glowing walls
+	//
+	if (uGlowTopColor.a > 0.0 && glowdist.x < uGlowTopColor.a)
+	{
+		color.rgb = SnapApplyGlow(
+			color.rgb,
+			desaturate(uGlowTopColor).rgb,
+			(1.0 - glowdist.x / uGlowTopColor.a)
+		);
+	}
+	if (uGlowBottomColor.a > 0.0 && glowdist.y < uGlowBottomColor.a)
+	{
+		color.rgb = SnapApplyGlow(
+			color.rgb,
+			desaturate(uGlowBottomColor).rgb,
+			(1.0 - glowdist.y / uGlowBottomColor.a)
+		);
+	}
+
+#if !defined LEGACY_USER_SHADER && !defined NO_LAYERS
+	//
+	// apply brightmaps
+	//
+	color.rgb = max(color.rgb, material.Base.rgb * material.Bright.rgb);
+#endif
+
+	return vec4(color.rgb, material.Base.a * vColor.a);
 }
 
 //===========================================================================
