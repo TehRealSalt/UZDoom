@@ -25,9 +25,11 @@
 
 class FConfigFile;
 class FGameConfigFile;
+class FGameStorageFile;
 class FIWadManager;
 
 extern FGameConfigFile *GameConfig;
+extern FGameStorageFile *GameStorage;
 
 void M_FindResponseFile (void);
 

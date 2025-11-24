@@ -628,7 +628,7 @@ FString G_GetSavegamesFolder()
 	// it.
 	if (netgame)
 	{
-		name = M_GetSavegamesPath();
+		name = M_GetSavegamesPath() << "netgame/";
 		usefilter = true;
 	}
 	else if (const char* const dir = Args->CheckValue(FArg_savedir))
