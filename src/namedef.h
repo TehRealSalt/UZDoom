@@ -303,6 +303,7 @@ xx(HelpMenu)
 xx(SoundMenu)
 xx(ConfirmPlayerReset)
 xx(JoystickOptions)
+xx(RetryMenu)
 
 xx(OptionMenuItemSubmenu)
 xx(OptionMenuItemCommand)
