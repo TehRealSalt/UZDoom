@@ -69,6 +69,8 @@ enum
 
 	CVAR_SYSTEM_ONLY		= 1 << 21, // System-related cvar that should only ever be changed by the user
 	CVAR_HIDDEN				= 1 << 22, // Don't show in console tab complete
+
+	CVAR_STORAGE			= 1 << 23, // Archived into a separate file from the user settings
 };
 
 enum ECVarType
@@ -270,7 +272,7 @@ private:
 	friend void UnlatchCVars (void);
 	friend void DestroyCVarsFlagged (uint32_t flags);
 	friend void C_ArchiveCVars (FConfigFile *f, uint32_t filter, uint32_t allow);
-	friend void C_SetCVarsToDefaults (void);
+	friend void C_SetCVarsToDefaults (bool storage);
 	friend void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter);
 	friend void C_DeinitConsole();
 	friend void C_ListCVarsWithoutDescription();
@@ -316,7 +318,7 @@ void DestroyCVarsFlagged (uint32_t flags);
 void C_ArchiveCVars (FConfigFile *f, uint32_t filter, uint32_t allow = 0);
 
 // initialize cvars to default values after they are created
-void C_SetCVarsToDefaults (void);
+void C_SetCVarsToDefaults (bool storage);
 
 void FilterCompactCVars (TArray<FBaseCVar *> &cvars, uint32_t filter);
 
