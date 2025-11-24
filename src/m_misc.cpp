@@ -60,10 +60,12 @@
 #include "gi.h"
 
 #include "gameconfigfile.h"
+#include "gamestoragefile.h"
 #include "gstrings.h"
 #include "vm.h"
 
 FGameConfigFile *GameConfig;
+FGameStorageFile *GameStorage;
 
 CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -395,6 +397,30 @@ CCMD(openconfig)
 	M_OpenConfigDir();
 }
 
+void M_SaveStorage()
+{
+	if (GameStorage == nullptr)
+		return;
+
+	if (GameStorage->HaveStorage())
+	{
+		if (gameinfo.ConfigName.IsNotEmpty())
+		{
+			GameStorage->ArchiveGameData(gameinfo.ConfigName.GetChars());
+		}
+		GameStorage->WriteConfigFile();
+	}
+
+	delete GameStorage;
+	GameStorage = nullptr;
+}
+
+UNSAFE_CCMD(writestorage)
+{
+	M_SaveStorage();
+	Printf("Storage saved.\n");
+}
+
 //
 // M_LoadDefaults
 //
@@ -403,6 +429,8 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
+
+	GameStorage = new FGameStorageFile;
 }
 
 
@@ -770,6 +798,7 @@ CCMD(openscreenshots)
 
 static int SaveConfig()
 {
+	M_SaveStorage();
 	return M_SaveDefaults(nullptr);
 }
 

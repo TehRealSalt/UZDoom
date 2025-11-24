@@ -653,7 +653,7 @@ CCMD(acc_reset2defaults)
 CCMD(reset2defaults)
 {
 	C_SetDefaultBindings ();
-	C_SetCVarsToDefaults ();
+	C_SetCVarsToDefaults (false);
 	R_SetViewSize (screenblocks);
 }
 
@@ -668,6 +668,11 @@ CCMD(reset2saved)
 CCMD(resetb2defaults)
 {
 	C_SetDefaultBindings ();
+}
+
+CCMD(resetstorage)
+{
+	C_SetCVarsToDefaults (true);
 }
 
 //=============================================================================

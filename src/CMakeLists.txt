@@ -812,6 +812,7 @@ set (PCH_SOURCES
 	g_hub.cpp
 	g_level.cpp
 	gameconfigfile.cpp
+	gamestoragefile.cpp
 	hu_scores.cpp
 	m_cheat.cpp
 	m_misc.cpp
