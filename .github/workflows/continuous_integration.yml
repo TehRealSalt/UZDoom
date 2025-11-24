@@ -169,7 +169,7 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
       - run: |
-          file=src/posix/freedesktop/org.zdoom.UZDoom.metainfo.xml
+          file=src/posix/freedesktop/com.doghouse_games.snapgame.metainfo.xml
           # These are here twice. First is to get nice output, second is to not make ci fail if network access fails
           flatpak-builder-lint --gha-format appstream $file || true
           AS_VALIDATE_NONET=1 flatpak-builder-lint appstream $file
@@ -264,7 +264,7 @@ jobs:
         config: &common_config
           - name: Windows
             os: windows-latest
-            build_opts: &msvc_opts -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DUSE_UPDATER=ON
+            build_opts: &msvc_opts -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl #-DUSE_UPDATER=ON
             build_opts_extra: ""
             deps_cmdline: &msvc_deps >-
               winget install --accept-source-agreements --verbose --exact --id=Ccache.Ccache
