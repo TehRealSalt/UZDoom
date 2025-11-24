@@ -801,7 +801,7 @@ int FIWadManager::IdentifyVersion (std::vector<std::string>&wadfiles, const char
 #endif
 
 		I_FatalError(
-			"Cannot find a game IWAD (doom.wad, heretic.wad, etc)!\n"
+			"Cannot find the game IWAD (snapgame.ipk3)!\n"
 			"Did you install " GAMENAME " properly?\n"
 			"\n"
 			"You can do any of the following:\n"

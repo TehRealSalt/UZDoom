@@ -4,11 +4,11 @@ version: 1
 
 AppDir:
   app_info:
-    id: org.zdoom.UZDoom
-    name: UZDoom
-    icon: org.zdoom.UZDoom
+    id: com.doghouse_games.snapgame
+    name: Snap the Sentinel
+    icon: com.doghouse_games.snapgame
     version: '{{GIT_DESCRIBE}}'
-    exec: ./usr/bin/uzdoom
+    exec: ./usr/bin/snapgame
     exec_args: $@
 
   runtime:

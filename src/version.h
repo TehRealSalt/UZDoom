@@ -77,8 +77,9 @@ const char *GetVersionString();
 #define SAVEVER 4560
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "UZDOOM"
+#define GAMESIG "SNAPGAME"
 
+/*
 // list of compatible ports, ex.:
 // #define ALLOWLOADIN "PORT1", "PORT2", "PORT3"
 #define ALLOWLOADIN "LZDOOM"
@@ -86,21 +87,22 @@ const char *GetVersionString();
 #ifndef LOAD_GZDOOM_4142_SAVES
     #define LOAD_GZDOOM_4142_SAVES 1
 #endif
+*/
 
-#define BASEWAD "uzdoom.pk3"
+#define BASEWAD "snapbase.pk3"
 // Set OPTIONALWAD to "" (null) to disable searching for it
-#define OPTIONALWAD "game_support.pk3"
+#define OPTIONALWAD ""
 #define GZDOOM 1
 #define VR3D_ENABLED
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "UZDoom"
-#define WGAMENAME L"UZDoom"
-#define GAMENAMELOWERCASE "uzdoom"
-#define APPID "org.zdoom.UZDoom"
-#define QUERYIWADDEFAULT true
-#define FORUM_URL "http://forum.zdoom.org/"
-#define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"
+#define GAMENAME "Snap the Sentinel"
+#define WGAMENAME L"Snap the Sentinel"
+#define GAMENAMELOWERCASE "snapgame"
+#define APPID "net.snapgame.SnapGame"
+#define QUERYIWADDEFAULT false
+#define FORUM_URL "https://tehrealsalt.itch.io/snap-the-sentinel/"
+#define BUGS_FORUM_URL	"https://tehrealsalt.itch.io/snap-the-sentinel/"
 // For QUERYIWADDEFAULT: Set to 'true' to always show dialog box on startup by default, 'false' to disable.
 // Should set to 'false' for standalone games, and set to 'true' for regular source port forks that are meant to run any game.
 
@@ -110,7 +112,7 @@ const char *GetVersionString();
 #define GAME_DIR "config/settings/" GAMENAME
 #endif
 
-#define DEFAULT_DISCORD_APP_ID "1428620310302691349"
+#define DEFAULT_DISCORD_APP_ID "0" // TODO: Snap the Sentinel?
 
 const int SAVEPICWIDTH = 216;
 const int SAVEPICHEIGHT = 162;

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component type="desktop-application">
+	<id>com.doghouse_games.snapgame</id>
+	<name>Snap the Sentinel</name>
+
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0</project_license>
+
+	<developer id="com.doghouse_games.snapgame">
+		<name>Doghouse Games</name>
+		<url>https://www.doghouse-games.com/</url>
+	</developer>
+	<summary>Cartoon fast-paced FPS</summary>
+	
+	<url type="homepage">https://www.snapgame.net/</url>
+	<url type="contact">mailto:help@doghouse-games.com</url>
+	<url type="bugtracker">https://github.com/TehRealSalt/UZDoom/issues</url>
+	<url type="vcs-browser">https://github.com/TehRealSalt/UZDoom</url>
+
+	<description>
+		<p>TODO: Proper description</p>
+		<p>Note that the commerical data file (snapgame.ipk3) is required in order to run this game.</p>
+	</description>
+
+	<branding>
+		<color type="primary">#222222</color>
+	</branding>
+
+	<screenshots>
+		<screenshot type="default">
+			<image>https://cdn.jsdelivr.net/gh/UZDoom/UZDoom@master/src/posix/freedesktop/screenshot_doom.png</image>
+			<caption>TODO: Proper screenshots</caption>
+		</screenshot>
+	</screenshots>
+
+	<launchable type="desktop-id">com.doghouse-games.SnapGame.desktop</launchable>
+	<provides>
+		<binary>snapgame</binary>
+	</provides>
+
+	<keywords>
+		<keyword>retro</keyword>
+		<keyword>fps</keyword>
+		<keyword>shooter</keyword>
+		<keyword>sourceport</keyword>
+		<keyword>doom</keyword>
+	</keywords>
+
+	<categories>
+		<category>Game</category>
+		<category>Shooter</category>
+	</categories>
+
+	<content_rating type="oars-1.1">
+		<content_attribute id="violence-fantasy">intense</content_attribute>
+	</content_rating>
+
+	<supports>
+		<control>gamepad</control>
+	</supports>
+
+	<recommends>
+		<control>keyboard</control>
+		<control>pointing</control>
+	</recommends>
+	
+	<releases>
+		<release version="1.0" date="2026-07-07">
+			<description>
+				<p>Initial release?</p>
+			</description>
+		</release>
+	</releases>
+
+</component>
