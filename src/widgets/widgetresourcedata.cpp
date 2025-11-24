@@ -27,7 +27,7 @@
 #include "tarray.h"
 #include "widgets/themedata.h"
 
-CUSTOM_CVARD(Int, ui_theme, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "launcher theme. 0: auto, 1: dark, 2: light, 3: high-contrast dark, 4: high-contrast light")
+CUSTOM_CVARD(Int, ui_theme, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG, "launcher theme. 0: auto, 1: dark, 2: light, 3: high-contrast dark, 4: high-contrast light")
 {
 	if (self < 0) self = 0;
 	if (self > 4) self = 4;
@@ -87,7 +87,7 @@ void InitWidgetResources(const char* filename)
 	case 4:
 		theme = HighContrastLight;
 		break;
-	}		
+	}
 	auto use_dark = ui_theme == 1 || ui_theme == 3 || (ui_theme == 0 && (theme & Dark));
 	if (ui_theme == 0 && ui_preferred_theme > 0)
 	{

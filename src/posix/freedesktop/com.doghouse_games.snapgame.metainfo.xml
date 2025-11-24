@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component type="desktop-application">
+	<id>com.doghouse_games.snapgame</id>
+	<name>Snap the Sentinel</name>
+
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0</project_license>
+
+	<developer id="com.doghouse_games.snapgame">
+		<name>Doghouse Games</name>
+		<url>https://www.doghouse-games.com/</url>
+	</developer>
+	<summary>Cartoon fast-paced FPS</summary>
+
+	<url type="homepage">https://www.snapgame.net/</url>
+	<url type="contact">https://www.doghouse-games.com/</url>
+	<url type="bugtracker">https://github.com/TehRealSalt/UZDoom/issues</url>
+	<url type="vcs-browser">https://github.com/TehRealSalt/UZDoom</url>
+
+	<description>
+		<p>Snap the Sentinel is a first person shooter inspired by classic 2D run 'n' gun games. Use the Chameleon Blaster to shoot everything from boomerangs to bombs to lasers and much more at enemies, and launch them sky high with one shell of a kick!</p>
+		<ul>
+			<li>Mechanics inspired by 16-bit era run 'n' gun games!</li>
+			<li>Tons of weapon modifiers that let you adapt to any combat situation!</li>
+			<li>Unlockable Hard mode with remixed levels!</li>
+			<li>Ranking system saves your highest score for every level!</li>
+			<li>Beautiful low-poly 3D models and stunning pixel art!</li>
+			<li>FM synth soundtrack with groovy beats and rockin' licks!</li>
+		</ul>
+		<p>Note that the commerical data file (snapgame.ipk3) is required in order to run this game.</p>
+		<p>For the Flatpak distribution of Snap the Sentinel, all file access is restricted to <code>~/.var/app/com.doghouse_games.snapgame/</code> by default for security reasons. You will need to place any add-on files there, or use an application like Flatseal to give Snap the Sentinel additional permissions.</p>
+	</description>
+
+	<branding>
+		<color type="primary" scheme_preference="light">#eefafa</color>
+		<color type="primary" scheme_preference="dark">#1b1b1b</color>
+	</branding>
+
+	<screenshots>
+		<screenshot type="default">
+			<image>https://cdn.jsdelivr.net/gh/TehRealSalt/UZDoom@snap-game/src/posix/freedesktop/screenshot_snap1.png</image>
+			<caption>TODO: Proper screenshots, more screenshots</caption>
+		</screenshot>
+	</screenshots>
+
+	<launchable type="desktop-id">com.doghouse_games.snapgame.desktop</launchable>
+	<provides>
+		<binary>snapgame</binary>
+	</provides>
+
+	<keywords>
+		<keyword>retro</keyword>
+		<keyword>fps</keyword>
+		<keyword>shooter</keyword>
+		<keyword>sourceport</keyword>
+		<keyword>doom</keyword>
+	</keywords>
+
+	<categories>
+		<category>Game</category>
+		<category>Shooter</category>
+	</categories>
+
+	<content_rating type="oars-1.1">
+		<content_attribute id="violence-fantasy">intense</content_attribute>
+	</content_rating>
+
+	<supports>
+		<control>gamepad</control>
+	</supports>
+
+	<recommends>
+		<control>keyboard</control>
+		<control>pointing</control>
+	</recommends>
+
+	<releases>
+		<release version="1.0" date="2026-07-07">
+			<description>
+				<p>Initial release?</p>
+			</description>
+		</release>
+	</releases>
+
+</component>
