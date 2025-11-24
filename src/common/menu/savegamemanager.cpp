@@ -49,7 +49,7 @@ extern bool netgame;
 
 //=============================================================================
 //
-// Save data maintenance 
+// Save data maintenance
 //
 //=============================================================================
 
@@ -70,7 +70,7 @@ FSavegameManagerBase::~FSavegameManagerBase()
 
 //=============================================================================
 //
-// Save data maintenance 
+// Save data maintenance
 //
 //=============================================================================
 
@@ -248,7 +248,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, LoadSavegame)
 
 //=============================================================================
 //
-// 
+//
 //
 //=============================================================================
 
@@ -629,7 +629,7 @@ FString G_GetSavegamesFolder()
 	// it.
 	if (netgame)
 	{
-		name = M_GetSavegamesPath();
+		name = M_GetSavegamesPath() << "netgame/";
 		usefilter = true;
 	}
 	else if (const char* const dir = Args->CheckValue(FArg_savedir))
@@ -673,4 +673,3 @@ FString G_BuildSaveName(const char* prefix)
 	name.Substitute("\\", "/");
 	return name;
 }
-

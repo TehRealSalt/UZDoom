@@ -1521,13 +1521,21 @@ void DestroyCVarsFlagged (uint32_t flags)
 	}
 }
 
-void C_SetCVarsToDefaults (void)
+void C_SetCVarsToDefaults (bool reset_storage)
 {
 	decltype(cvarMap)::Iterator it(cvarMap);
 	decltype(cvarMap)::Pair *pair;
 	while (it.NextPair(pair))
 	{
 		auto cvar = pair->Value;
+
+		bool is_storage = !!(cvar->Flags & CVAR_STORAGE);
+		if (is_storage != reset_storage)
+		{
+			// Only reset storage OR user settings, not everything.
+			continue;
+		}
+
 		// Only default save-able cvars
 		if (cvar->Flags & CVAR_ARCHIVE)
 		{
@@ -1556,7 +1564,7 @@ void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 	{
 		auto cvar = pair->Value;
 		if ((cvar->Flags &
-			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_CONFIG_ONLY))
+			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE|CVAR_CONFIG_ONLY|CVAR_STORAGE))
 			== filter)
 		{
 			cvarlist.Push(cvar);
@@ -1747,7 +1755,7 @@ void FBaseCVar::ListVars (const char *filter, int listtype)
 			{
 				++count;
 
-				Printf ("%c%c%c%c%c %s = %s",
+				Printf ("%c%c%c%c%c%c  %s = %s",
 					flags & CVAR_ARCHIVE ? 'A' : ' ',
 					flags & CVAR_USERINFO ? 'U' :
 						flags & CVAR_SERVERINFO ? 'S' :
@@ -1757,6 +1765,7 @@ void FBaseCVar::ListVars (const char *filter, int listtype)
 						flags & CVAR_UNSETTABLE ? '*' : ' ',
 					flags & CVAR_MOD ? 'M' : ' ',
 					flags & CVAR_IGNORE ? 'X' : ' ',
+					flags & CVAR_STORAGE ? 'G' : ' ',
 					var->GetName(),
 					var->GetHumanString());
 
@@ -2142,4 +2151,3 @@ UCVarValue FZSColorCVar::GenericZSCVarCallback(UCVarValue value, ECVarType type)
 	v.Int = val;
 	return v;
 }
-

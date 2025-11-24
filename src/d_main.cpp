@@ -70,6 +70,7 @@
 #include "g_game.h"
 #include "g_levellocals.h"
 #include "gameconfigfile.h"
+#include "gamestoragefile.h"
 #include "gi.h"
 #include "gstrings.h"
 #include "hu_stuff.h"
@@ -345,6 +346,7 @@ extern void SetupPlayerClasses ();
 void DeinitMenus();
 void P_Shutdown();
 void M_SaveDefaultsFinal();
+void M_SaveStorage();
 void R_Shutdown();
 void I_ShutdownInput();
 void SetConsoleNotifyBuffer();
@@ -1857,6 +1859,10 @@ void ParseCVarInfo()
 				{
 					cvarflags |= CVAR_CONFIG_ONLY;
 				}
+				else if (stricmp(sc.String, "storage") == 0)
+				{
+					cvarflags |= CVAR_STORAGE;
+				}
 				else if (stricmp(sc.String, "handlerClass") == 0)
 				{
 					sc.MustGetStringName("(");
@@ -1888,6 +1894,18 @@ void ParseCVarInfo()
 			{
 				sc.ScriptError("One of 'server', 'user', or 'nosave' must be specified");
 			}
+
+			// A storage variable that doesn't save does not make sense.
+			if (cvarflags & CVAR_STORAGE)
+			{
+				if ((cvarflags & CVAR_ARCHIVE) == 0)
+				{
+					sc.ScriptError("Can't use 'storage' and 'noarchive' at the same time");
+				}
+
+				GameStorage->SetHaveStorage();
+			}
+
 			// The next token must be the cvar type.
 			if (sc.TokenType == TK_Bool)
 			{
@@ -1963,7 +1981,8 @@ void ParseCVarInfo()
 	// clutter up the cvar space when not playing mods with custom cvars.
 	if (addedcvars)
 	{
-		GameConfig->DoModSetup (gameinfo.ConfigName.GetChars());
+		GameConfig->DoModSetup(gameinfo.ConfigName.GetChars());
+		GameStorage->DoModSetup(gameinfo.ConfigName.GetChars());
 	}
 }
 
@@ -3419,6 +3438,7 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 
 	FBaseCVar::DisableCallbacks();
 	GameConfig->DoGameSetup (gameinfo.ConfigName.GetChars());
+	GameStorage->DoGameSetup (gameinfo.ConfigName.GetChars());
 
 	AddAutoloadFiles(iwad_info->Autoname.GetChars(), allwads);
 
@@ -4244,6 +4264,7 @@ int GameMain()
 	I_ShutdownGraphics();
 	I_ShutdownInput();
 	M_SaveDefaultsFinal();
+	M_SaveStorage();
 	DeleteStartupScreen();
 	C_UninitCVars(); // must come last so that nothing will access the CVARs anymore after deletion.
 	if(ret != 1337)
@@ -4290,6 +4311,7 @@ void D_Cleanup()
 	P_Shutdown();
 
 	M_SaveDefaults(NULL);			// save config before the restart
+	M_SaveStorage();
 
 	// delete all data that cannot be left until reinitialization
 	CleanSWDrawer();

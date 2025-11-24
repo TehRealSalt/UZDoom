@@ -181,7 +181,7 @@ FString M_GetAutoexecPath()
 // M_GetOldConfigPath
 //
 // Check if we have a config in a place that's no longer used.
-// 
+//
 //===========================================================================
 
 FString M_GetOldConfigPath(int& type)
@@ -228,7 +228,7 @@ FString M_GetOldConfigPath(int& type)
 // M_MigrateOldConfig
 //
 // Ask the user what to do with their old config.
-// 
+//
 //===========================================================================
 
 int M_MigrateOldConfig()
@@ -279,7 +279,7 @@ FString M_GetConfigPath(bool for_reading)
 	if (!for_reading || FileExists(path))
 		return path;
 
-	// No config was found in the accepted locations. 
+	// No config was found in the accepted locations.
 	// Look in previously valid places to see if we have something we can migrate
 
 	int type = 0;
@@ -337,7 +337,7 @@ FString M_GetScreenshotsPath()
 
 		path << "/" GAMENAME "/";
 	}
-	else 
+	else
 	{
 		path = GetKnownFolder(CSIDL_MYPICTURES, FOLDERID_Pictures, true);
 		path << "/Screenshots/" GAMENAME "/";
@@ -368,8 +368,7 @@ FString M_GetSavegamesPath()
 		path = GetKnownFolder(-1, FOLDERID_SavedGames, true);
 		path << "/" GAMENAME "/";
 	}
-	if (netgame)
-		path << "NetGame/";
+
 	return path;
 }
 
@@ -390,7 +389,7 @@ FString M_GetDocumentsPath()
 		return progdir;
 	}
 	// Try defacto My Documents/My Games folder
-	else 
+	else
 	{
 		// I assume since this isn't a standard folder, it doesn't have a localized name either.
 		path = GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true);

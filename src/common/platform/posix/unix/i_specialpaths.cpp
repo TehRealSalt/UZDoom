@@ -222,10 +222,7 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	if (netgame)
-		return M_GetDocumentsPath() + "savegames/netgame/";
-	else
-		return M_GetDocumentsPath() + "savegames/";
+	return M_GetDocumentsPath() + "savegames/";
 }
 
 //===========================================================================

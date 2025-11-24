@@ -463,7 +463,7 @@ CCMD (menu_endgame)
 		S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/invalid", snd_menuvolume, ATTN_NONE);
 		return;
 	}
-		
+
 	//M_StartControlPanel (true);
 	S_Sound (CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
 
@@ -493,7 +493,7 @@ CCMD (quicksave)
 		G_DoQuickSave();
 		return;
 	}
-		
+
 	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
 		S_Sound(CHAN_VOICE, CHANF_UI|(haptics_do_menus?CHANF_RUMBLE:CHANF_NORUMBLE), "menu/activate", snd_menuvolume, ATTN_NONE);
@@ -501,7 +501,7 @@ CCMD (quicksave)
 		M_SetMenu(NAME_SavegameMenu);
 		return;
 	}
-	
+
 	// [mxd]. Just save the game, no questions asked.
 	if (!saveloadconfirmation)
 	{
@@ -539,7 +539,7 @@ CCMD (quickload)
 		M_StartMessage (GStrings.GetString("QLOADNET"), 1);
 		return;
 	}
-		
+
 	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
 		M_StartControlPanel(true);
@@ -641,7 +641,7 @@ CCMD(acc_reset2defaults)
 CCMD(reset2defaults)
 {
 	C_SetDefaultBindings ();
-	C_SetCVarsToDefaults ();
+	C_SetCVarsToDefaults (false);
 	R_SetViewSize (screenblocks);
 }
 
@@ -656,6 +656,11 @@ CCMD(reset2saved)
 CCMD(resetb2defaults)
 {
 	C_SetDefaultBindings ();
+}
+
+CCMD(resetstorage)
+{
+	C_SetCVarsToDefaults (true);
 }
 
 //=============================================================================
@@ -676,7 +681,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			
+
 			// Delete previous contents
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
 			{
@@ -689,7 +694,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 				}
 			}
 
-			
+
 			int posx = (int)ld->mXpos;
 			int posy = (int)ld->mYpos;
 			int topy = posy;
@@ -760,7 +765,7 @@ void M_StartupEpisodeMenu(FNewGameStartup *gs)
 					}
 					if (it == nullptr)
 					{
-						it = CreateListMenuItemText(posx, posy, spacing, AllEpisodes[i].mShortcut, 
+						it = CreateListMenuItemText(posx, posy, spacing, AllEpisodes[i].mShortcut,
 							AllEpisodes[i].mEpisodeName.GetChars(), ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_SkillMenu, i);
 					}
 					ld->mItems.Push(it);
@@ -828,7 +833,7 @@ static void BuildPlayerclassMenu()
 			// add player display
 
 			ld->mSelectedItem = ld->mItems.Size();
-			
+
 			int posy = (int)ld->mYpos;
 			int topy = posy;
 
@@ -859,7 +864,7 @@ static void BuildPlayerclassMenu()
 			if (numclassitems <= 1)
 			{
 				// create a dummy item that auto-chooses the default class.
-				auto it = CreateListMenuItemText(0, 0, 0, 'p', "player", 
+				auto it = CreateListMenuItemText(0, 0, 0, 'p', "player",
 					ld->mFont,ld->mFontColor, ld->mFontColor2, NAME_EpisodeMenu, -1000);
 				ld->mAutoselect = ld->mItems.Push(it);
 				success = true;
@@ -971,7 +976,7 @@ static void InitCrosshairsList()
 	lastlump = 0;
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Crosshairs);
-	if (opt == nullptr) 
+	if (opt == nullptr)
 	{
 		return;	// no crosshair value list present. No need to go on.
 	}
@@ -1066,7 +1071,7 @@ void M_CreateGameMenus()
 	auto opt = OptionValues.CheckKey(NAME_PlayerTeam);
 	if (opt != nullptr)
 	{
-		auto op = *opt; 
+		auto op = *opt;
 		op->mValues.Resize(Teams.Size() + 1);
 		op->mValues[0].Value = 0;
 		op->mValues[0].Text = "$OPTVAL_NONE";
@@ -1215,7 +1220,7 @@ void M_StartupSkillMenu(FNewGameStartup *gs)
 			for(unsigned i=0; i<ld->mItems.Size(); i++)
 			{
 				FName n = ld->mItems[i]->mAction;
-				if (n == NAME_Startgame || n == NAME_StartgameConfirm) 
+				if (n == NAME_Startgame || n == NAME_StartgameConfirm)
 				{
 					ld->mItems.Resize(i);
 					break;
@@ -1483,7 +1488,7 @@ CCMD (menu_game)
 	M_StartControlPanel (true);
 	M_SetMenu(NAME_PlayerclassMenu, -1);	// The playerclass menu is the first in the 'start game' chain
 }
-								
+
 CCMD (menu_options)
 {
 	M_StartControlPanel (true);
