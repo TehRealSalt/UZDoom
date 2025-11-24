@@ -56,10 +56,12 @@
 #include "gi.h"
 
 #include "gameconfigfile.h"
+#include "gamestoragefile.h"
 #include "gstrings.h"
 #include "vm.h"
 
 FGameConfigFile *GameConfig;
+FGameStorageFile *GameStorage;
 
 CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -313,6 +315,30 @@ CCMD(openconfig)
 	I_OpenShellFolder(ExtractFilePath(GameConfig->GetPathName()).GetChars());
 }
 
+void M_SaveStorage()
+{
+	if (GameStorage == nullptr)
+		return;
+
+	if (GameStorage->HaveStorage())
+	{
+		if (gameinfo.ConfigName.IsNotEmpty())
+		{
+			GameStorage->ArchiveGameData(gameinfo.ConfigName.GetChars());
+		}
+		GameStorage->WriteConfigFile();
+	}
+
+	delete GameStorage;
+	GameStorage = nullptr;
+}
+
+UNSAFE_CCMD(writestorage)
+{
+	M_SaveStorage();
+	Printf("Storage saved.\n");
+}
+
 //
 // M_LoadDefaults
 //
@@ -321,6 +347,8 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
+
+	GameStorage = new FGameStorageFile;
 }
 
 
@@ -340,17 +368,17 @@ struct pcx_t
 	uint16_t			ymin;
 	uint16_t			xmax;
 	uint16_t			ymax;
-	
+
 	uint16_t			hdpi;
 	uint16_t			vdpi;
 
 	uint8_t				palette[48];
-	
+
 	int8_t				reserved;
 	int8_t				color_planes;
 	uint16_t			bytes_per_line;
 	uint16_t			palette_type;
-	
+
 	int8_t				filler[58];
 };
 
@@ -688,6 +716,7 @@ CCMD(openscreenshots)
 
 static int SaveConfig()
 {
+	M_SaveStorage();
 	return M_SaveDefaults(nullptr);
 }
 
