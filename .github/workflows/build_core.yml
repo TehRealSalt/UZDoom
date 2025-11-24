@@ -70,7 +70,7 @@ jobs:
 
         cd build
         mkdir package
-        packagename="${{ runner.os }}-${{ runner.arch }}"-UZDoom-"${{ steps.ghd.outputs.describe }}"
+        packagename="${{ runner.os }}-${{ runner.arch }}"-SnapGame-"${{ steps.ghd.outputs.describe }}"
 
         7z a package/licenses.zip ../docs/licenses/*
 
@@ -96,7 +96,7 @@ jobs:
                 mv ${{ inputs.build_type }}/* .
             fi
 
-            cp uzdoom.* *.pk3 package
+            cp snapgame.* *.pk3 package
 
             cd package
             7z a -sdel -r "${packagename}.zip" *
@@ -104,14 +104,14 @@ jobs:
 
         elif [[ "${{ runner.os }}" == 'macOS' ]]; then
 
-            if [[ ! -d uzdoom.app ]] && [[ -d ${{ inputs.build_type }}/uzdoom.app ]]; then
-                mv ${{ inputs.build_type }}/uzdoom.app uzdoom.app
+            if [[ ! -d snapgame.app ]] && [[ -d ${{ inputs.build_type }}/snapgame.app ]]; then
+                mv ${{ inputs.build_type }}/snapgame.app snapgame.app
             fi
-            mv package/licenses.zip uzdoom.app/Contents/Resources
-            cp *.pk3 uzdoom.app/Contents/MacOS
+            mv package/licenses.zip snapgame.app/Contents/Resources
+            cp *.pk3 snapgame.app/Contents/MacOS
 
-            if dsymutil uzdoom.app/Contents/MacOS/uzdoom; then
-              mv uzdoom.app/Contents/MacOS/uzdoom.dSYM uzdoom.app/Contents/Resources/
+            if dsymutil snapgame.app/Contents/MacOS/snapgame; then
+              mv snapgame.app/Contents/MacOS/snapgame.dSYM snapgame.app/Contents/Resources/
             fi
 
             SIGN_ID="-"
@@ -130,20 +130,20 @@ jobs:
             fi
 
             dylibbundler -ns -of -cd -b \
-              -x ./uzdoom.app/Contents/MacOS/uzdoom \
-              -d ./uzdoom.app/Contents/Libs \
+              -x ./snapgame.app/Contents/MacOS/snapgame \
+              -d ./snapgame.app/Contents/Libs \
               -p @executable_path/../Libs/
 
-            xattr -cr uzdoom.app
+            xattr -cr snapgame.app
 
-            find uzdoom.app/Contents/Libs -type f -name "*.dylib" -print0 | while IFS= read -r -d '' file; do
+            find snapgame.app/Contents/Libs -type f -name "*.dylib" -print0 | while IFS= read -r -d '' file; do
                 codesign --remove-signature "$file"
                 codesign --force $SIGN_OPTS -s "$SIGN_ID" "$file"
             done
 
-            /usr/bin/codesign --force --deep $SIGN_OPTS -s "$SIGN_ID" uzdoom.app -v
+            /usr/bin/codesign --force --deep $SIGN_OPTS -s "$SIGN_ID" snapgame.app -v
 
-            cp -r uzdoom.app package
+            cp -r snapgame.app package
 
             cd package
             7z a -sdel -r "${packagename}.zip" *
@@ -151,7 +151,7 @@ jobs:
 
         elif [[ "${{ runner.os }}" == 'Linux' ]]; then
 
-            ldd ./uzdoom
+            ldd ./snapgame
 
             mkdir AppDir
             cmake --install . --prefix "$(realpath AppDir)/usr"

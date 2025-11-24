@@ -2434,6 +2434,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 		.AddString("Title", description)
 		.AddString("Current Map", primaryLevel->MapName.GetChars());
 
+#ifdef ALLOWLOADIN
 	TArray<const char *> allowLoadIn {ALLOWLOADIN};
 
 	if(allowLoadIn.Size() > 0)
@@ -2445,6 +2446,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 		}
 		savegameinfo.EndArray();
 	}
+#endif
 
 	PutSaveWads (savegameinfo);
 	PutSaveComment (savegameinfo);

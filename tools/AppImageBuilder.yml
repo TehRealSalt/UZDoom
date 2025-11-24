@@ -4,11 +4,11 @@ version: 1
 
 AppDir:
   app_info:
-    id: org.zdoom.UZDoom
-    name: UZDoom
-    icon: org.zdoom.UZDoom
+    id: net.snapgame.SnapGame
+    name: SnapGame
+    icon: net.snapgame.SnapGame
     version: '{{GIT_DESCRIBE}}'
-    exec: ./usr/bin/uzdoom
+    exec: ./usr/bin/snapgame
     exec_args: $@
 
   runtime:
