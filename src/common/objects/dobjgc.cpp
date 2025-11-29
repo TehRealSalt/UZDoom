@@ -264,7 +264,11 @@ static size_t SweepObjects(size_t count)
 				*SweepPos = curr->ObjNext;
 				curr->ObjectFlags |= OF_Cleanup;
 				curr->~DObject();
+#ifdef GC_STRESS_TEST
+				curr->ObjectFlags |= OF_Freed;
+#else
 				M_Free(curr);
+#endif
 				swept += GCDELETECOST;
 			}
 		}

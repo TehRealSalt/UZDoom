@@ -1,6 +1,14 @@
 #pragma once
+
+#define GC_STRESS_TEST
+
 #include <stdint.h>
 #include "tarray.h"
+
+#ifdef GC_STRESS_TEST
+#include "vm.h"
+#endif
+
 class DObject;
 class FSerializer;
 
@@ -29,6 +37,13 @@ enum EObjectFlags
 	OF_Networked		= 1 << 14,		// Object has a unique network identifier that makes it synchronizable between all clients.
 	OF_ClientSide		= 1 << 15,		// Object is owned by a specific client rather than the server
 	OF_Travelling		= 1 << 16,		// Object is currently moving from one level to another
+
+#ifdef GC_STRESS_TEST
+	// When this is defined, keep ALL allocated memory around.
+	// When it would normally be freed, give it this special flag.
+	// If an object with this flag is accessed, immediately assert.
+	OF_Freed			= 1 << 31,
+#endif
 };
 
 template<class T> class TObjPtr;
@@ -108,6 +123,13 @@ namespace GC
 	{
 		if (obj == NULL || !(obj->ObjectFlags & OF_EuthanizeMe))
 		{
+#ifdef GC_STRESS_TEST
+			if (obj != NULL && (obj->ObjectFlags & OF_Freed))
+			{
+				ThrowAbortException(X_READ_NIL, "object '%s' was read after free", obj->GetClass()->TypeName.GetChars());
+				return NULL;
+			}
+#endif
 			return obj;
 		}
 		return obj = NULL;
@@ -118,6 +140,13 @@ namespace GC
 	{
 		if (obj == NULL || !(obj->ObjectFlags & OF_EuthanizeMe))
 		{
+#ifdef GC_STRESS_TEST
+			if (obj != NULL && (obj->ObjectFlags & OF_Freed))
+			{
+				ThrowAbortException(X_READ_NIL, "object '%s' was read after free", obj->GetClass()->TypeName.GetChars());
+				return NULL;
+			}
+#endif
 			return obj;
 		}
 		return NULL;
