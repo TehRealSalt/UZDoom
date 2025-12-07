@@ -645,6 +645,14 @@ void FSerializer::WriteObjects()
 		{
 			auto obj = w->mDObjects[i];
 
+#ifdef GC_STRESS_TEST
+			if (obj->ObjectFlags & OF_Freed)
+			{
+				assert(false && "Attempt to write already-freed object reference");
+				I_Error("Attempt to write already-freed object reference to '%s'", obj->GetClass()->TypeName.GetChars());
+			}
+#endif
+
 			if(obj->ObjectFlags & OF_Transient) continue;
 
 			BeginObject(nullptr);
@@ -1272,6 +1280,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	if (retcode) *retcode = true;
 	if (arc.isWriting())
 	{
+#ifdef GC_STRESS_TEST
+		if (value != nullptr && (value->ObjectFlags & OF_Freed))
+		{
+			assert(false && "Attempt to write already-freed object reference");
+			I_Error("Attempt to write already-freed object reference to '%s'", value->GetClass()->TypeName.GetChars());
+		}
+#endif
+
 		if (value != nullptr && !(value->ObjectFlags & (OF_EuthanizeMe | OF_Transient)))
 		{
 			int ndx;
