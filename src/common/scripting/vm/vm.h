@@ -1076,7 +1076,18 @@ FString FStringFormat(VM_ARGS, int offset = 0);
 
 unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 
+#ifdef GC_STRESS_TEST
+#define VM_ASSERT_SELF(self, funcname) \
+	if (self->ObjectFlags & OF_Freed) \
+	{ \
+		ThrowAbortException(X_READ_NIL, "object '%s' was read after free (IFVIRTUALPTR %s)", self->GetClass()->TypeName.GetChars(), #funcname); \
+	}
+#else
+#define VM_ASSERT_SELF(self, funcname)
+#endif
+
 #define IFVIRTUALPTR(self, cls, funcname) \
+	VM_ASSERT_SELF(self) \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
 		VIndex = GetVirtualIndex(RUNTIME_CLASS(cls), #funcname); \
@@ -1089,6 +1100,7 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 #define IFVIRTUAL(cls, funcname) IFVIRTUALPTR(this, cls, funcname)
 
 #define IFVIRTUALPTRNAME(self, cls, funcname) \
+	VM_ASSERT_SELF(self) \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
 		VIndex = GetVirtualIndex(PClass::FindClass(cls), #funcname); \
@@ -1099,6 +1111,7 @@ unsigned GetVirtualIndex(PClass *cls, const char *funcname);
 	if (func != nullptr)
 
 #define IFOVERRIDENVIRTUALPTRNAME(self, clsname, funcname) \
+	VM_ASSERT_SELF(self) \
 	static VMFunction *orig_func = nullptr; \
 	static unsigned VIndex = ~0u; \
 	if (VIndex == ~0u) { \
