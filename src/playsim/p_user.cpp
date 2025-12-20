@@ -126,13 +126,18 @@ static TArray<uint8_t> PredictionActorBackupArray;
 // messed with the world in a way will desync things eventually regardless.
 struct FPredictionPhysicsLink
 {
+	// Track found link sources to make sure any additional ones are released. We don't want to
+	// accidentally fix linking bugs when doing the relink from unpredicting.
+	TMap<const sector_t*, bool> ValidSectors = {};
 	TArray<int> TouchingSectorsPos = {};
-	int ThingPos = -1;
+	TMap<int, bool> ValidBlockNodes = {};
 	TArray<int> BlockmapPos = {};
+	int ThingPos = -1;
 	bool bInSector = false;
 
 	void Backup(const AActor& mo)
 	{
+		ValidSectors.Clear();
 		TouchingSectorsPos.Clear();
 		for (auto node = mo.touching_sectorlist; node != nullptr; node = node->m_tnext)
 		{
@@ -144,6 +149,7 @@ struct FPredictionPhysicsLink
 				++index;
 			}
 			TouchingSectorsPos.Push(index - 1);
+			ValidSectors[node->m_sector] = true;
 		}
 
 		ThingPos = -1;
@@ -164,6 +170,7 @@ struct FPredictionPhysicsLink
 				ThingPos = index - 1;
 		}
 
+		ValidBlockNodes.Clear();
 		BlockmapPos.Clear();
 		for (auto node = mo.BlockNode; node != nullptr; node = node->NextBlock)
 		{
@@ -175,16 +182,34 @@ struct FPredictionPhysicsLink
 				++index;
 			}
 			BlockmapPos.Push(index - 1);
+			ValidBlockNodes[node->BlockIndex] = true;
 		}
 	}
 
 	void Restore(AActor& mo)
 	{
 		size_t count = 0u;
-		for (auto node = mo.touching_sectorlist; node != nullptr; node = node->m_tnext)
+		for (auto node = mo.touching_sectorlist; node != nullptr;)
 		{
+			if (ValidSectors.CheckKey(node->m_sector) == nullptr)
+			{
+				// This doesn't get updated in the unlinking for some reason, so we have to fix it
+				// manually...
+				auto next = node->m_tnext;
+				if (node == mo.touching_sectorlist)
+					mo.touching_sectorlist = next;
+				P_DelSecnode(node, &sector_t::touching_thinglist);
+				node = next;
+				continue;
+			}
+
 			if (count >= TouchingSectorsPos.Size())
-				break;
+			{
+				// We still need to check for invalid sector nodes, so keep going.
+				node = node->m_tnext;
+				continue;
+			}
+
 			// Only the sector list needs to be relinked as the order of the thing list is
 			// deterministically rebuilt by its nature.
 			if (node->m_sprev == nullptr)
@@ -212,6 +237,7 @@ struct FPredictionPhysicsLink
 				node->m_sector->touching_thinglist = node;
 
 			++count;
+			node = node->m_tnext;
 		}
 
 		if (bInSector && mo.Sector != nullptr)
@@ -237,10 +263,28 @@ struct FPredictionPhysicsLink
 		}
 
 		count = 0u;
-		for (auto node = mo.BlockNode; node != nullptr; node = node->NextBlock)
+		for (auto node = mo.BlockNode; node != nullptr;)
 		{
+			if (ValidBlockNodes.CheckKey(node->BlockIndex) == nullptr)
+			{
+				auto next = node->NextBlock;
+				if (node == mo.BlockNode)
+					mo.BlockNode = next;
+				if (node->NextActor != nullptr)
+					node->NextActor->PrevActor = node->PrevActor;
+				*(node->PrevActor) = node->NextActor;
+				node->Release();
+				node = next;
+				continue;
+			}
+
 			if (count >= BlockmapPos.Size())
-				break;
+			{
+				// We still need to check for invalid blockmap nodes, so keep going.
+				node = node->NextBlock;
+				continue;
+			}
+
 			// Same as sector linking above.
 			*node->PrevActor = node->NextActor;
 			if (node->NextActor != nullptr)
@@ -261,6 +305,7 @@ struct FPredictionPhysicsLink
 			*node->PrevActor = node;
 
 			++count;
+			node = node->NextBlock;
 		}
 	}
 } static PredictionPhysicsLinking = {};
@@ -1672,8 +1717,8 @@ void P_UnPredictPlayer ()
 			act->ViewPos->Flags = PredictionViewPosBackup.Flags;
 		}
 
-		// Boon TODO: Investigate polyobject collision undefined behavior that happens when relinking? This could break the
-		// determinism if something happens involving these.
+		// TODO: This might cause issues with emulating undefined behavior regarding things like polyobject collisions? Will need to be
+		// investigated further in case it breaks determinism.
 		// Make sure it recreates its nodes at its original position, the backup will then handle relinking
 		// those nodes in the correct order.
 		act->LinkToWorld(nullptr);
