@@ -358,6 +358,13 @@ else()
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} -fPIE" )
 		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie" )
 	endif( APPLE )
+
+	if( WIN32 )
+		if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+			# Keep required Windows dlls consistent between compilers
+			set( ALL_C_FLAGS "${ALL_C_FLAGS} -static -static-libgcc -static-libstdc++" )
+		endif()
+	endif()
 endif()
 
 set( CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${REL_LINKER_FLAGS}" )
@@ -376,7 +383,13 @@ set( CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${REL_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 
-option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
+set( FORCE_INTERNAL_BZIP2_DEFAULT OFF )
+if ( WIN32 AND NOT MSVC )
+	# Keep required Windows dlls consistent between compilers
+	set( FORCE_INTERNAL_BZIP2_DEFAULT ON )
+endif()
+
+option(FORCE_INTERNAL_BZIP2 "Use internal bzip2" ${FORCE_INTERNAL_BZIP2_DEFAULT})
 option(FORCE_INTERNAL_ZMUSIC "Use internal zmusic" ON)
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 option(FORCE_INTERNAL_CPPDAP "Use internal cppdap" ON)

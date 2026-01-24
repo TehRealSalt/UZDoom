@@ -27,6 +27,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x800
 #include <windows.h>
+#include <initguid.h>
 #include <dinput.h>
 #ifndef __GNUC__
 #include <wbemidl.h>

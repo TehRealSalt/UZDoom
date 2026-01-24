@@ -26,6 +26,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <cmath>
 
 #include "i_input.h"
 #include "d_eventbase.h"

@@ -69,8 +69,13 @@ if( WIN32 )
 		ws2_32
 		setupapi
 		oleaut32
-		dbghelp
-		legacy_stdio_definitions )
+		dbghelp )
+
+	if ( MSVC )
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} legacy_stdio_definitions )
+	else()
+		set( PROJECT_LIBRARIES ${PROJECT_LIBRARIES} dwmapi )
+	endif()
 
 	if( DEM_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		if( DX_dxguid_LIBRARY )
