@@ -38,6 +38,13 @@ jobs:
               choco install \
                 tree
 
+          - name: Windows GCC
+            os: windows-latest
+            extra_options: -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+            deps_cmdline: |
+              choco install \
+                tree
+
           # - name: Windows LLVM
           #   os: windows-latest
           #   extra_options: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_FLAGS="/arch:AVX /clang:-Wno-unused-command-line-argument" -DCMAKE_CXX_FLAGS="/arch:AVX /EHsc /GR /clang:-Wno-c++11-narrowing /clang:-Wno-unused-command-line-argument"

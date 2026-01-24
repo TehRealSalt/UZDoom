@@ -337,12 +337,12 @@ message("Building for target architecture: ${TARGET_ARCHITECTURE}")
 
 # VPX
 
-if( MSVC AND NOT VPX_FOUND )
+if( WIN32 AND NOT VPX_FOUND )
 	# Use prebuilt library
 	set( VPX_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/Windows/vpx" )
 	set( VPX_INCLUDE_DIR ${VPX_ROOT_PATH}/include )
 	set( VPX_LIBRARIES libvpx )
-	if ( NOT ARM64 )
+	if ( MSVC AND NOT ARM64 )
 		set (VPX_LIBRARIES ${VPX_LIBRARIES} libcompat-to-msvc )
 	endif()
 	if( ARM64 )
