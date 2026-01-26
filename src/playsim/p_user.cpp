@@ -296,6 +296,7 @@ struct FPredictionPhysicsLink
 			{
 				if (i > BlockmapPos[count])
 					break;
+				++i;
 			}
 
 			node->NextActor = *next;
