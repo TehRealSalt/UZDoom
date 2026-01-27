@@ -304,10 +304,8 @@ struct FActorBackup : public FObjectBackup
 {
 private:
 	FPhysicsLinkBackup _link = {};
-	TObjPtr<AActor*> _cam = MakeObjPtr<AActor*>(nullptr);
+	// Boon TODO: Add norollback key word to fix this.
 	TObjPtr<AActor*> _inv = MakeObjPtr<AActor*>(nullptr);
-	int _invTics = 0;
-	bool _settingsController = false;
 public:
 	FActorBackup(AActor& act) : FObjectBackup(act)
 	{
@@ -321,13 +319,8 @@ public:
 			return;
 
 		act->UnlinkFromWorld(nullptr);
-		if (act->player == nullptr || act->player->mo != act)
-			return;
-
-		_cam = act->player->camera;
-		_inv = act->PointerVar<AActor>(NAME_InvSel);
-		_invTics = act->player->inventorytics;
-		_settingsController = act->player->settings_controller;
+		if (act->player != nullptr && act->player->mo == act)
+			_inv = act->PointerVar<AActor>(NAME_InvSel);
 	}
 
 	void Restore() override
@@ -343,20 +336,14 @@ public:
 
 		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 		act->flags8 &= ~MF8_RECREATELIGHTS;
-
 		if (act->player != nullptr && act->player->mo == act)
-		{
-			act->player->camera = _cam;
 			act->PointerVar<AActor>(NAME_InvSel) = _inv;
-			act->player->inventorytics = _invTics;
-			act->player->settings_controller = _settingsController;
-		}
 	}
 };
 
 static FLevelLocals* RollbackLevel = nullptr;			// Save this for when opening the reader.
 static FileSys::FCompressedBuffer RollbackData = {};	// Snapshot of all saved Objects.
-static TArray<TObjPtr<DObject*>> RollbackObjects = {};	// Try and reuse existing Objects when deserializing. Mark these to avoid the GC tossing them if references are lost.
+static TArray<TObjPtr<DObject*>> RollbackObjects = {};	// Try and reuse existing Objects when deserializing.
 static TArray<FObjectBackup> FullRollback = {};			// If these Objects no longer exist, they must be recreated instead of left as a null pointer.
 
 // [GRB] Custom player classes
@@ -1759,12 +1746,15 @@ void player_t::Serialize(FSerializer &arc)
 
 	arc("class", cls)
 		("mo", mo)
-		("camera", camera)
 		("playerstate", playerstate)
 		("cmd", cmd);
 
 	if (!arc.IsRollback())
 	{
+		arc("camera", camera)
+			("inventorytics", inventorytics)
+			("settings_controller", settings_controller);
+
 		if (arc.isReading())
 		{
 			userinfo.Reset(mo->Level->PlayerNum(this));
@@ -1786,7 +1776,6 @@ void player_t::Serialize(FSerializer &arc)
 		("vel", Vel)
 		("centering", centering)
 		("health", health)
-		("inventorytics", inventorytics)
 		("fragcount", fragcount)
 		("spreecount", spreecount)
 		("multicount", multicount)
@@ -1846,7 +1835,6 @@ void player_t::Serialize(FSerializer &arc)
 		("poisontype", poisontype)
 		("poisonpaintype", poisonpaintype)
 		("timefreezer", timefreezer)
-		("settings_controller", settings_controller)
 		("onground", onground)
 		("musinfoactor", MUSINFOactor)
 		("musinfotics", MUSINFOtics)

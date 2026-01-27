@@ -233,8 +233,7 @@ bool FSerializer::canSkip() const
 
 bool FSerializer::canWrite(DObject* obj) const
 {
-	return obj == nullptr
-			|| (!IsRollback() && !(obj->ObjectFlags & OF_Transient))
+	return (!IsRollback() && !(obj->ObjectFlags & OF_Transient))
 			|| (IsRollback() && !(obj->ObjectFlags & OF_NoRollback));
 }
 
@@ -648,16 +647,15 @@ void FSerializer::WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<FObjectBa
 		// we cannot use the C++11 shorthand syntax here because the array may grow while being processed.
 		for (unsigned i = 0u; i < w->mDObjects.Size(); ++i)
 		{
-			auto obj = w->mDObjects[i];
-			if (!canWrite(obj))
-				continue;
-
+			// Don't check writeability here since NoRollback objects need to be preserved if stored
+			// in a field that doesn't have the same flag.
 			const unsigned r = to.Push(MakeObjPtr<DObject*>(w->mDObjects[i]));
-			if (obj == nullptr || fullSerialize == nullptr)
+			if (fullSerialize == nullptr)
 				continue;
 
 			// Make sure to only serialize Objects that are actually backed up. Everything else is just to
 			// correctly map out the pointers.
+			auto obj = w->mDObjects[i];
 			bool found = false;
 			for (auto& b : *fullSerialize)
 			{
@@ -1430,7 +1428,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 	if (retcode) *retcode = true;
 	if (arc.isWriting())
 	{
-		if (value != nullptr && !(value->ObjectFlags & OF_EuthanizeMe) && arc.canWrite(value))
+		if (value != nullptr && !(value->ObjectFlags & OF_EuthanizeMe)
+			&& (arc.IsRollback() || !(value->ObjectFlags & OF_Transient))) // If we're rolling back, something always needs to be written.
 		{
 			int ndx;
 			if (value == WP_NOCHANGE)
@@ -1451,6 +1450,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, DObject *&value, DObje
 				}
 			}
 			Serialize(arc, key, ndx, nullptr);
+		}
+		else if (arc.w->inObject() && arc.IsRollback())
+		{
+			arc.w->Key(key);
+			arc.w->Null();
 		}
 		else if (!arc.w->inObject())
 		{
