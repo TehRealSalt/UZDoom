@@ -386,7 +386,7 @@ void Net_ClearBuffers()
 			state.Tics[j].Data.SetData(nullptr, 0);
 	}
 
-	bPredictionGuard = false;
+	NetworkEntityManager::DisablePrediction();
 	NetBufferLength = 0u;
 	RemoteClient = -1;
 	MaxClients = TicDup = 1u;
@@ -2177,8 +2177,8 @@ void TryRunTics()
 		if (ClientTic > startCommand)
 		{
 			LagState = LAG_PREDICTING;
-			P_UnPredictPlayer();
-			P_PredictPlayer(&players[consoleplayer]);
+			P_UnPredictClient();
+			P_PredictClient();
 		}
 
 		// If we actually did have some tics available, make sure the UI
@@ -2200,7 +2200,7 @@ void TryRunTics()
 	LastGameUpdate = EnterTic;
 
 	// Run the available tics.
-	P_UnPredictPlayer();
+	P_UnPredictClient();
 	while (runTics--)
 	{
 		const bool stabilize = ShouldStabilizeTick();
@@ -2223,7 +2223,7 @@ void TryRunTics()
 			break;
 		}
 	}
-	P_PredictPlayer(&players[consoleplayer]);
+	P_PredictClient();
 
 	// These should use the actual tics since they're not actually tied to the gameplay logic.
 	// Make sure it always comes after so the HUD has the correct game state when updating.

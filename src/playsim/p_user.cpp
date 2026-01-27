@@ -115,16 +115,10 @@ static DVector3 LastPredictedPosition;
 static int LastPredictedPortalGroup;
 static int LastPredictedTic;
 
-static TArray<FRandom> PredictionRNG;
-
-static player_t PredictionPlayerBackup;
-static AActor *PredictionActor;
-static TArray<uint8_t> PredictionActorBackupArray;
-
 // Iterate through the Actor's own link nodes, storing their index within the
 // list. This isn't guaranteed to give correct results, but that means someone
 // messed with the world in a way will desync things eventually regardless.
-struct FPredictionPhysicsLink
+struct FPhysicsLinkBackup
 {
 	// Track found link sources to make sure any additional ones are released. We don't want to
 	// accidentally fix linking bugs when doing the relink from unpredicting.
@@ -135,10 +129,9 @@ struct FPredictionPhysicsLink
 	int ThingPos = -1;
 	bool bInSector = false;
 
-	void Backup(const AActor& mo)
+	FPhysicsLinkBackup() = default;
+	FPhysicsLinkBackup(const AActor& mo)
 	{
-		ValidSectors.Clear();
-		TouchingSectorsPos.Clear();
 		for (auto node = mo.touching_sectorlist; node != nullptr; node = node->m_tnext)
 		{
 			int index = 0;
@@ -152,8 +145,6 @@ struct FPredictionPhysicsLink
 			ValidSectors[node->m_sector] = true;
 		}
 
-		ThingPos = -1;
-		bInSector = false;
 		if (mo.Sector != nullptr)
 		{
 			int index = 0;
@@ -170,8 +161,6 @@ struct FPredictionPhysicsLink
 				ThingPos = index - 1;
 		}
 
-		ValidBlockNodes.Clear();
-		BlockmapPos.Clear();
 		for (auto node = mo.BlockNode; node != nullptr; node = node->NextBlock)
 		{
 			int index = 0;
@@ -309,13 +298,66 @@ struct FPredictionPhysicsLink
 			node = node->NextBlock;
 		}
 	}
-} static PredictionPhysicsLinking = {};
+};
 
-struct
+struct FActorBackup : public FObjectBackup
 {
-	DVector3 Pos = {};
-	int Flags = 0;
-} static PredictionViewPosBackup;
+private:
+	FPhysicsLinkBackup _link = {};
+	TObjPtr<AActor*> _cam = MakeObjPtr<AActor*>(nullptr);
+	TObjPtr<AActor*> _inv = MakeObjPtr<AActor*>(nullptr);
+	int _invTics = 0;
+	bool _settingsController = false;
+public:
+	FActorBackup(AActor& act) : FObjectBackup(act)
+	{
+		_link = { act };
+	}
+
+	void PreRestore() override
+	{
+		auto act = GetObject<AActor>();
+		if (act == nullptr)
+			return;
+
+		act->UnlinkFromWorld(nullptr);
+		if (act->player == nullptr || act->player->mo != act)
+			return;
+
+		_cam = act->player->camera;
+		_inv = act->PointerVar<AActor>(NAME_InvSel);
+		_invTics = act->player->inventorytics;
+		_settingsController = act->player->settings_controller;
+	}
+
+	void Restore() override
+	{
+		auto act = GetObject<AActor>();
+		if (act == nullptr)
+			return;
+
+		act->LinkToWorld(nullptr);
+		// TODO: This might cause issues with emulating undefined behavior regarding things like polyobject collisions? Will need to be
+		// investigated further in case it breaks determinism.
+		_link.Restore(*act);
+
+		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
+		act->flags8 &= ~MF8_RECREATELIGHTS;
+
+		if (act->player != nullptr && act->player->mo == act)
+		{
+			act->player->camera = _cam;
+			act->PointerVar<AActor>(NAME_InvSel) = _inv;
+			act->player->inventorytics = _invTics;
+			act->player->settings_controller = _settingsController;
+		}
+	}
+};
+
+static FLevelLocals* RollbackLevel = nullptr;			// Save this for when opening the reader.
+static FileSys::FCompressedBuffer RollbackData = {};	// Snapshot of all saved Objects.
+static TArray<TObjPtr<DObject*>> RollbackObjects = {};	// Try and reuse existing Objects when deserializing. Mark these to avoid the GC tossing them if references are lost.
+static TArray<FObjectBackup> FullRollback = {};			// If these Objects no longer exist, they must be recreated instead of left as a null pointer.
 
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
@@ -421,7 +463,7 @@ player_t::~player_t()
 	DestroyPSprites();
 }
 
-void player_t::CopyFrom(player_t &p, bool copyPSP)
+void player_t::CopyFrom(player_t &p)
 {
 	mo = p.mo;
 	playerstate = p.playerstate;
@@ -511,12 +553,9 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	SoundClass = p.SoundClass;
 	LastSafePos = p.LastSafePos;
 	angleOffsetTargets = p.angleOffsetTargets;
-	if (copyPSP)
-	{
-		// This needs to transfer ownership completely.
-		psprites = p.psprites;
-		p.psprites = nullptr;
-	}
+	// This needs to transfer ownership completely.
+	psprites = p.psprites;
+	p.psprites = nullptr;
 }
 
 size_t player_t::PropagateMark()
@@ -1516,7 +1555,7 @@ void P_PlayerThink (player_t *player)
 
 	// Moved this to directly after player thinking to get more accurate velocity values. Also takes
 	// 3D vs 2D movement into account now.
-	if (!bPredictionGuard && player->mo != nullptr)
+	if (!NetworkEntityManager::IsPredicting() && player->mo != nullptr)
 	{
 		double spd = (player->mo->flags & MF_NOGRAVITY) ? player->mo->Vel.Length() : player->mo->Vel.XY().Length();
 		player->mo->Level->velocities[player - players].SetVelocity(spd);
@@ -1546,51 +1585,72 @@ void P_LerpCalculate(AActor* pmo, const DVector3& from, DVector3 &result, float 
 	result = pmo->Vec3Offset(-diff.X, -diff.Y, -diff.Z);
 }
 
-void P_PredictPlayer (player_t *player)
+void P_MarkRollbackObjects()
 {
-	if (demoplayback || gamestate != GS_LEVEL ||
-		player->mo == NULL ||
-		player != player->mo->Level->GetConsolePlayer() ||
-		(player->mo->ObjectFlags & OF_JustSpawned) ||
-		(player->cheats & CF_PREDICTING))
-	{
+	// Try and avoid losing references to any Objects being used by a backed up entity, that way
+	// we can avoid pointers getting unnecessarily nulled. The fully rolled back Objects should
+	// also be in here which, if they weren't destroyed manually, allows us to skip the step of
+	// creating a new object should the reference get lost.
+	for (DObject* obj : RollbackObjects)
+		GC::Mark(obj);
+}
+
+static void P_RollbackObject(DObject* obj, FSerializer& arc)
+{
+	if (obj == nullptr || (obj->ObjectFlags & (OF_EuthanizeMe | OF_NoRollback | OF_JustSpawned)))
 		return;
-	}
 
-	// Avoid memcpying in bad pointers.
-	GC::CheckGC();
-
-	bPredictionGuard = true;
-
-	FRandom::SaveRNGState(PredictionRNG);
-
-	// Save original values for restoration later
-	PredictionPlayerBackup.CopyFrom(*player, false);
-
-	auto act = player->mo;
-	PredictionActor = player->mo;
-	PredictionActorBackupArray.Resize(act->GetClass()->Size);
-	memcpy(PredictionActorBackupArray.Data(), &act->snext, act->GetClass()->Size - ((uint8_t *)&act->snext - (uint8_t *)act));
-
-	// Since this is a DObject it needs to have its fields backed up manually for restore, otherwise any changes
-	// to it will be permanent while predicting. This is now auto-created on pawns to prevent creation spam.
-	if (act->ViewPos != nullptr)
+	auto act = dyn_cast<AActor>(obj);
+	if (act != nullptr)
 	{
-		PredictionViewPosBackup.Pos = act->ViewPos->Offset;
-		PredictionViewPosBackup.Flags = act->ViewPos->Flags;
+		FullRollback.Push(FActorBackup{ *act });
+		if (act->player != nullptr && act->player->mo == act)
+			act->player->Serialize(arc);
+	}
+	else
+	{
+		FullRollback.Push({ *obj });
 	}
 
-	PredictionPhysicsLinking.Backup(*act);
+	obj->Serialize(arc);
+	if (act != nullptr)
+	{
+		// TODO: In the future these will be automatically handled by the net owner system, but handle them
+		// manually for now to increase stability.
+		P_RollbackObject(act->ViewPos, arc);
+		P_RollbackObject(act->modelData, arc);
 
-	act->flags &= ~MF_PICKUP;
-	act->flags2 &= ~MF2_PUSHWALL;
-	player->cheats |= CF_PREDICTING;
+		// TODO: This needs to be handled properly in the rest of the physics code...
+		act->flags &= ~MF_PICKUP;
+		act->flags2 &= ~MF2_PUSHWALL;
+	}
+	obj->ObjectFlags |= OF_Predicting;
+}
+
+void P_PredictClient()
+{
+	if (demoplayback || gamestate != GS_LEVEL || NetworkEntityManager::IsPredicting())
+		return;
+
+	player_t* player = &players[consoleplayer];
+	NetworkEntityManager::EnablePrediction();
+
+	FDoomSerializer writer = { player->mo->Level };
+	if (writer.OpenWriter(false, true))
+	{
+		FRandom::RollbackRNGState(writer);
+		P_RollbackObject(player->mo, writer);
+		writer.WriteObjectsTo(RollbackObjects, &FullRollback);
+		RollbackData = writer.GetCompressedOutput(&RollbackObjects, &FullRollback);
+		RollbackLevel = player->mo->Level;
+		writer.Close();
+	}
+
+	player->cheats |= CF_PREDICTING; // This is only here for backwards compat.
 
 	int maxtic = ClientTic;
 	if (gametic == maxtic || player->playerstate != PST_LIVE)
-	{
 		return;
-	}
 
 	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
 	// called. Call order is preserved.
@@ -1670,72 +1730,27 @@ void P_PredictPlayer (player_t *player)
 	LastPredictedPortalGroup = player->mo->Level->PointInSector(LastPredictedPosition)->PortalGroup;
 }
 
-void P_UnPredictPlayer ()
+void P_UnPredictClient()
 {
-	player_t *player = &players[consoleplayer];
+	if (!NetworkEntityManager::IsPredicting())
+		return;
 
-	if (player->cheats & CF_PREDICTING)
+	NetworkEntityManager::DisablePrediction();
+
+	FDoomSerializer reader = { RollbackLevel };
+	if (reader.OpenReader(&RollbackData, true))
 	{
-		unsigned int i;
-		AActor *act = player->mo;
-
-		if (act != PredictionActor)
-		{
-			// Q: Can this happen? If yes, can we continue?
-		}
-
-		FRandom::RestoreRNGState(PredictionRNG);
-
-		AActor *savedcamera = player->camera;
-
-		auto &actInvSel = act->PointerVar<AActor*>(NAME_InvSel);
-		auto InvSel = actInvSel;
-		int inventorytics = player->inventorytics;
-		const bool settings_controller = player->settings_controller;
-		FArray attached = *(FArray*)&act->AttachedLights;
-		FArray userLights = *(FArray*)&act->UserLights;
-
-		player->CopyFrom(PredictionPlayerBackup, false);
-
-		player->settings_controller = settings_controller;
-		// Restore the camera instead of using the backup's copy, because spynext/prev
-		// could cause it to change during prediction.
-		player->camera = savedcamera;
-
-		// Unlink from all lists since this data isn't valid for server ticks.
-		act->UnlinkFromWorld(nullptr);
-		memcpy(&act->snext, PredictionActorBackupArray.Data(), PredictionActorBackupArray.Size() - ((uint8_t *)&act->snext - (uint8_t *)act));
-		// Clear stale pointers.
-		act->touching_lineportallist = nullptr;
-		act->touching_rendersectors = act->touching_sectorlist = act->touching_sectorportallist = nullptr;
-		act->sprev = (AActor**)(size_t)0xBeefCafe;
-		act->snext = nullptr;
-		act->BlockNode = nullptr;
-
-		if (act->ViewPos != nullptr)
-		{
-			act->ViewPos->Offset = PredictionViewPosBackup.Pos;
-			act->ViewPos->Flags = PredictionViewPosBackup.Flags;
-		}
-
-		// TODO: This might cause issues with emulating undefined behavior regarding things like polyobject collisions? Will need to be
-		// investigated further in case it breaks determinism.
-		// Make sure it recreates its nodes at its original position, the backup will then handle relinking
-		// those nodes in the correct order.
-		act->LinkToWorld(nullptr);
-		PredictionPhysicsLinking.Restore(*act);
-
-		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
-		act->flags8 &= ~MF8_RECREATELIGHTS;
-		memcpy(&act->AttachedLights, &attached, sizeof(FArray));
-		memcpy(&act->UserLights, &userLights, sizeof(FArray));
-
-		actInvSel = InvSel;
-		player->inventorytics = inventorytics;
-
-		bPredictionGuard = false;
-		GC::CheckGC(); // HACK: See the comment in the bPredictionGuard block of CheckGC
+		FRandom::RollbackRNGState(reader);
+		reader.ReadObjectsFrom(RollbackObjects, &FullRollback);
+		if (reader.mObjectErrors)
+			I_Error("Failed to rollback game state");
+		reader.Close();
 	}
+
+	RollbackObjects.Clear();
+	FullRollback.Clear();
+	RollbackLevel = nullptr;
+	RollbackData.Clean();
 }
 
 void player_t::Serialize(FSerializer &arc)
@@ -1748,14 +1763,17 @@ void player_t::Serialize(FSerializer &arc)
 		("playerstate", playerstate)
 		("cmd", cmd);
 
-	if (arc.isReading())
+	if (!arc.IsRollback())
 	{
-		userinfo.Reset(mo->Level->PlayerNum(this));
-		ReadUserInfo(arc, userinfo, skinname);
-	}
-	else
-	{
-		WriteUserInfo(arc, userinfo);
+		if (arc.isReading())
+		{
+			userinfo.Reset(mo->Level->PlayerNum(this));
+			ReadUserInfo(arc, userinfo, skinname);
+		}
+		else
+		{
+			WriteUserInfo(arc, userinfo);
+		}
 	}
 
 	arc("desiredfov", DesiredFOV)
@@ -1836,16 +1854,19 @@ void player_t::Serialize(FSerializer &arc)
 		("angleoffsettargets", angleOffsetTargets)
 		("lastsafepos", LastSafePos);
 
-	if (arc.isWriting ())
+	if (!arc.IsRollback())
 	{
-		// If the player reloaded because they pressed +use after dying, we
-		// don't want +use to still be down after the game is loaded.
-		oldbuttons = ~0;
-		original_oldbuttons = ~0;
-	}
-	if (skinname.IsNotEmpty())
-	{
-		userinfo.SkinChanged(skinname.GetChars(), CurrentPlayerClass);
+		if (arc.isWriting())
+		{
+			// If the player reloaded because they pressed +use after dying, we
+			// don't want +use to still be down after the game is loaded.
+			oldbuttons = ~0;
+			original_oldbuttons = ~0;
+		}
+		if (skinname.IsNotEmpty())
+		{
+			userinfo.SkinChanged(skinname.GetChars(), CurrentPlayerClass);
+		}
 	}
 }
 

@@ -509,7 +509,7 @@ DBehavior* AActor::AddBehavior(PClass& type)
 			return nullptr;
 
 		b->Owner = this;
-		b->ObjectFlags |= (ObjectFlags & (OF_ClientSide | OF_Transient));
+		b->ObjectFlags |= (ObjectFlags & OF_TransferrableFlags);
 
 		Behaviors[type.TypeName] = b;
 		Level->AddActorBehavior(*b);

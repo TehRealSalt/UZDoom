@@ -1530,7 +1530,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 			if (type != nullptr)
 			{
 				if (type->ScopeFlags & Scope_UI)
-					varflags |= VARF_UI;
+					varflags |= VARF_UI | VARF_NoRollback;
 				if (type->ScopeFlags & Scope_Play)
 					varflags |= VARF_Play;
 			}
@@ -1548,7 +1548,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 
 		if (field->Flags & ZCC_Native)
 		{
-			varflags |= VARF_Native | VARF_Transient;
+			varflags |= VARF_Native | VARF_Transient | VARF_NoRollback;
 		}
 
 		static int excludescope[] = { ZCC_UIFlag, ZCC_Play, ZCC_ClearScope };
@@ -1565,7 +1565,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		if (fc > 1)
 		{
 			Error(field, "Invalid combination of scope qualifiers %s on field %s", FlagsToString(excludeflags).GetChars(), FName(field->Names->Name).GetChars());
-			varflags &= ~(VARF_UI | VARF_Play); // make plain data
+			varflags &= ~(VARF_UI | VARF_Play | VARF_NoRollback); // make plain data
 		}
 
 		if (field->Flags & ZCC_Meta)

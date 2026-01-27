@@ -322,13 +322,9 @@ void DObject::Destroy ()
 	GC::WriteBarrier(this);
 }
 
-// This will be here until prediction can be reworked.
-// TODO: Fix prediction by serializing instead of using this terrible memcpy method.
-bool bPredictionGuard = false;
-
 static void NativeDestroy(DObject* self)
 {
-	if (bPredictionGuard && !self->IsClientSide() && ((self->ObjectFlags & OF_Networked) || self->IsKindOf(NAME_Thinker)))
+	if (NetworkEntityManager::IsPredicting() && !self->IsClientSide() && !self->IsPredicted())
 		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Destroyed non-client-side Object %s while predicting\n", self->GetClass()->TypeName.GetChars());
 	if (!(self->ObjectFlags & OF_EuthanizeMe))
 		self->Destroy();
@@ -640,7 +636,7 @@ void DObject::Serialize(FSerializer &arc)
 		
 	ObjectFlags |= OF_SerialSuccess;
 
-	if (arc.isReading() && (ObjectFlags & OF_Networked))
+	if (arc.isReading() && (ObjectFlags & OF_Networked) && !arc.IsRollback())
 	{
 		ClearNetworkID();
 		EnableNetworking(true);
@@ -732,7 +728,7 @@ void NetworkEntityManager::SetClientNetworkEntity(DObject* mo, const unsigned in
 
 void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
 {
-	if (ent->IsNetworked() || ent->IsClientSide())
+	if (IsPredicting() || ent->IsNetworked() || ent->IsClientSide() || ent->IsPredicted())
 		return;
 
 	// Slot 0 is reserved for the world.
@@ -754,7 +750,7 @@ void NetworkEntityManager::AddNetworkEntity(DObject* const ent)
 
 void NetworkEntityManager::RemoveNetworkEntity(DObject* const ent)
 {
-	if (!ent->IsNetworked())
+	if (IsPredicting() || !ent->IsNetworked())
 		return;
 
 	const uint32_t id = ent->GetNetworkID();
@@ -774,6 +770,54 @@ DObject* NetworkEntityManager::GetNetworkEntity(const uint32_t id)
 		return nullptr;
 
 	return s_netEntities[id];
+}
+
+void NetworkEntityManager::AddPredictedEntity(DObject* ent)
+{
+	if (IsPredicting() && !ent->IsClientSide() && !ent->IsPredicted())
+	{
+		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Spawned non-client-side Object %s while predicting\n", ent->GetClass()->TypeName.GetChars());
+		ent->SetPredicted(true);
+		s_predictedEntities.Push(ent);
+	}
+}
+
+void NetworkEntityManager::RemovePredictedEntity(DObject* ent)
+{
+	if (IsPredicting() && ent->IsPredicted())
+	{
+		ent->SetPredicted(false);
+		s_predictedEntities.Delete(s_predictedEntities.Find(ent));
+	}
+}
+
+void NetworkEntityManager::EnablePrediction()
+{
+	s_bClientPredicting = true;
+}
+
+void NetworkEntityManager::DisablePrediction()
+{
+	while (s_predictedEntities.Size())
+	{
+		TArray<DObject*> ents = {};
+		ents.Swap(s_predictedEntities);
+		for (auto ent : ents)
+		{
+			if (!(ent->ObjectFlags & OF_EuthanizeMe))
+			{
+				ent->SetPredicted(false);
+				ent->Destroy();
+			}
+		}
+	}
+
+	s_bClientPredicting = false;
+}
+
+bool NetworkEntityManager::IsPredicting()
+{
+	return s_bClientPredicting;
 }
 
 //==========================================================================
@@ -808,6 +852,7 @@ void DObject::EnableNetworking(const bool enable)
 void DObject::RemoveFromNetwork()
 {
 	NetworkEntityManager::RemoveNetworkEntity(this);
+	NetworkEntityManager::RemovePredictedEntity(this);
 }
 
 static unsigned int GetNetworkID(DObject* const self)
