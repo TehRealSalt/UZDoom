@@ -300,6 +300,23 @@ struct FPhysicsLinkBackup
 	}
 };
 
+struct FObjectBackup
+{
+private:
+	TObjPtr<DObject*> _obj = MakeObjPtr<DObject*>(nullptr);
+public:
+	FObjectBackup() = default;
+	FObjectBackup(DObject& obj)
+	{
+		_obj = &obj;
+	}
+
+	template<class T>
+	T* GetObject()
+	{
+		return dyn_cast<T>(_obj);
+	}
+};
 struct FActorBackup : public FObjectBackup
 {
 private:
@@ -312,7 +329,7 @@ public:
 		_link = { act };
 	}
 
-	void PreRestore() override
+	void PreRestore()
 	{
 		auto act = GetObject<AActor>();
 		if (act == nullptr)
@@ -323,7 +340,7 @@ public:
 			_inv = act->PointerVar<AActor>(NAME_InvSel);
 	}
 
-	void Restore() override
+	void Restore()
 	{
 		auto act = GetObject<AActor>();
 		if (act == nullptr)
@@ -341,10 +358,11 @@ public:
 	}
 };
 
-static FLevelLocals* RollbackLevel = nullptr;			// Save this for when opening the reader.
-static FileSys::FCompressedBuffer RollbackData = {};	// Snapshot of all saved Objects.
-static TArray<TObjPtr<DObject*>> RollbackObjects = {};	// Try and reuse existing Objects when deserializing.
-static TArray<FObjectBackup> FullRollback = {};			// If these Objects no longer exist, they must be recreated instead of left as a null pointer.
+static FLevelLocals* RollbackLevel = nullptr;				// Save this for when opening the reader.
+static FileSys::FCompressedBuffer RollbackData = {};		// Snapshot of all saved Objects.
+static TArray<TObjPtr<DObject*>> RollbackObjectRefs = {};	// Try and reuse existing Objects when deserializing.
+static TArray<FObjectBackup> RollbackObjects = {};			// If these Objects no longer exist, they must be recreated instead of left as a null pointer.
+static TArray<FActorBackup> RollbackActors = {};
 
 // [GRB] Custom player classes
 TArray<FPlayerClass> PlayerClasses;
@@ -1578,7 +1596,7 @@ void P_MarkRollbackObjects()
 	// we can avoid pointers getting unnecessarily nulled. The fully rolled back Objects should
 	// also be in here which, if they weren't destroyed manually, allows us to skip the step of
 	// creating a new object should the reference get lost.
-	for (DObject* obj : RollbackObjects)
+	for (DObject* obj : RollbackObjectRefs)
 		GC::Mark(obj);
 }
 
@@ -1590,13 +1608,13 @@ static void P_RollbackObject(DObject* obj, FSerializer& arc)
 	auto act = dyn_cast<AActor>(obj);
 	if (act != nullptr)
 	{
-		FullRollback.Push(FActorBackup{ *act });
+		RollbackActors.Push(FActorBackup{ *act });
 		if (act->player != nullptr && act->player->mo == act)
 			act->player->Serialize(arc);
 	}
 	else
 	{
-		FullRollback.Push({ *obj });
+		RollbackObjects.Push({ *obj });
 	}
 
 	obj->Serialize(arc);
@@ -1627,8 +1645,12 @@ void P_PredictClient()
 	{
 		FRandom::RollbackRNGState(writer);
 		P_RollbackObject(player->mo, writer);
-		writer.WriteObjectsTo(RollbackObjects, &FullRollback);
-		RollbackData = writer.GetCompressedOutput(&RollbackObjects, &FullRollback);
+		TArray<DObject*> fullRollback = {};
+		for (auto& a : RollbackActors)
+			fullRollback.Push(a.GetObject<DObject>());
+		for (auto& o : RollbackObjects)
+			fullRollback.Push(o.GetObject<DObject>());
+		RollbackData = writer.GetCompressedOutput(&RollbackObjectRefs, &fullRollback);
 		RollbackLevel = player->mo->Level;
 		writer.Close();
 	}
@@ -1727,15 +1749,22 @@ void P_UnPredictClient()
 	FDoomSerializer reader = { RollbackLevel };
 	if (reader.OpenReader(&RollbackData, true))
 	{
+		for (auto& a : RollbackActors)
+			a.PreRestore();
+
 		FRandom::RollbackRNGState(reader);
-		reader.ReadObjectsFrom(RollbackObjects, &FullRollback);
+		reader.ReadObjectsFrom(RollbackObjectRefs);
 		if (reader.mObjectErrors)
 			I_Error("Failed to rollback game state");
 		reader.Close();
+
+		for (auto& a : RollbackActors)
+			a.Restore();
 	}
 
+	RollbackObjectRefs.Clear();
 	RollbackObjects.Clear();
-	FullRollback.Clear();
+	RollbackActors.Clear();
 	RollbackLevel = nullptr;
 	RollbackData.Clean();
 }

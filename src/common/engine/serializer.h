@@ -46,7 +46,6 @@ class DObject;
 class FTextureID;
 struct FTranslationID;
 struct BoneOverride;
-struct FObjectBackup;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -99,7 +98,7 @@ public:
 	unsigned ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
-	void WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<FObjectBackup>* fullSerialize = nullptr);
+	void WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<DObject*>* fullSerialize = nullptr);
 
 private:
 	virtual void CloseReaderCustom() {}
@@ -116,7 +115,7 @@ public:
 	bool OpenReader(const char *buffer, size_t length, bool predicting = false);
 	bool OpenReader(FileSys::FCompressedBuffer *input, bool predicting = false);
 	void Close();
-	void ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from, TArray<FObjectBackup>* fullSerialize = nullptr);
+	void ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from);
 	void ReadObjects(bool hubtravel);
 	bool BeginObject(const char *name);
 	void EndObject();
@@ -127,8 +126,8 @@ public:
 	void EndArray();
 	unsigned GetSize(const char *group);
 	const char *GetKey();
-	const char *GetOutput(unsigned *len = nullptr, TArray<TObjPtr<DObject*>>* objs = nullptr, TArray<FObjectBackup>* fullSerialize = nullptr);
-	FileSys::FCompressedBuffer GetCompressedOutput(TArray<TObjPtr<DObject*>>* objs = nullptr, TArray<FObjectBackup>* fullSerialize = nullptr);
+	const char *GetOutput(unsigned *len = nullptr, TArray<TObjPtr<DObject*>>* objs = nullptr, TArray<DObject*>* fullSerialize = nullptr);
+	FileSys::FCompressedBuffer GetCompressedOutput(TArray<TObjPtr<DObject*>>* objs = nullptr, TArray<DObject*>* fullSerialize = nullptr);
 	// The sprite serializer is a special case because it is needed by the VM to handle its 'spriteid' type.
 	virtual FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
 	// This is only needed by the type system.
@@ -256,32 +255,6 @@ public:
 	int mErrors = 0;
 	int mObjectErrors = 0;
 	FString mLumpName;
-};
-
-struct FObjectBackup
-{
-private:
-	TObjPtr<DObject*> _obj = MakeObjPtr<DObject*>(nullptr);
-public:
-	FObjectBackup() = default;
-	FObjectBackup(DObject& obj)
-	{
-		_obj = &obj;
-	}
-
-	bool IsValid() const
-	{
-		return _obj != nullptr;
-	}
-
-	virtual void PreRestore() {}
-	virtual void Restore() {}
-
-	template<class T>
-	T* GetObject()
-	{
-		return dyn_cast<T>(_obj);
-	}
 };
 
 #if !defined(__sun) || !defined(__sun__)

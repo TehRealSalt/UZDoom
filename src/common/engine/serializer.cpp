@@ -639,7 +639,7 @@ const char *FSerializer::GetKey()
 //
 //==========================================================================
 
-void FSerializer::WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<FObjectBackup>* fullSerialize)
+void FSerializer::WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<DObject*>* fullSerialize)
 {
 	if (isWriting() && w->mDObjects.Size())
 	{
@@ -656,16 +656,7 @@ void FSerializer::WriteObjectsTo(TArray<TObjPtr<DObject*>>& to, TArray<FObjectBa
 			// Make sure to only serialize Objects that are actually backed up. Everything else is just to
 			// correctly map out the pointers.
 			auto obj = w->mDObjects[i];
-			bool found = false;
-			for (auto& b : *fullSerialize)
-			{
-				if (b.GetObject<DObject>() == obj)
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
+			if (fullSerialize->Find(obj) >= fullSerialize->Size())
 				continue;
 
 			BeginObject(nullptr);
@@ -714,17 +705,11 @@ void FSerializer::WriteObjects()
 //
 //==========================================================================
 
-void FSerializer::ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from, TArray<FObjectBackup>* fullSerialize)
+void FSerializer::ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from)
 {
 	bool hadErrors = false;
 	if (isReading() && BeginArray("objects"))
 	{
-		if (fullSerialize != nullptr)
-		{
-			for (auto& b : *fullSerialize)
-				b.PreRestore();
-		}
-
 		try
 		{
 			r->mDObjects.Resize(from.Size());
@@ -736,22 +721,22 @@ void FSerializer::ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from, TArray<FObjec
 			{
 				unsigned i = 0u;
 				Serialize(*this, "rollbackindex", i, nullptr);
-				if (r->mDObjects[i] != nullptr)
-					continue;
-
-				FString clsname;	// do not deserialize the class type directly so that we can print appropriate errors.
-				Serialize(*this, "classtype", clsname, nullptr);
-				PClass* cls = PClass::FindClass(clsname);
-				if (cls == nullptr)
+				if (r->mDObjects[i] == nullptr)
 				{
-					Printf(TEXTCOLOR_RED "Unknown object class '%s' in rollback\n", clsname.GetChars());
-					hadErrors = true;
-					r->mDObjects[i] = RUNTIME_CLASS(DObject)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
-					r->mDObjects[i]->Destroy();								// but we do not want to keep this around, so destroy it right away.
-				}
-				else
-				{
-					r->mDObjects[i] = cls->CreateNew();
+					FString clsname;	// do not deserialize the class type directly so that we can print appropriate errors.
+					Serialize(*this, "classtype", clsname, nullptr);
+					PClass* cls = PClass::FindClass(clsname);
+					if (cls == nullptr)
+					{
+						Printf(TEXTCOLOR_RED "Unknown object class '%s' in rollback\n", clsname.GetChars());
+						hadErrors = true;
+						r->mDObjects[i] = RUNTIME_CLASS(DObject)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
+						r->mDObjects[i]->Destroy();								// but we do not want to keep this around, so destroy it right away.
+					}
+					else
+					{
+						r->mDObjects[i] = cls->CreateNew();
+					}
 				}
 				EndObject();
 			}
@@ -806,12 +791,6 @@ void FSerializer::ReadObjectsFrom(TArray<TObjPtr<DObject*>>& from, TArray<FObjec
 			r->mDObjects.Clear();
 			// make sure this flag gets unset, even if something in here throws an error.
 			throw;
-		}
-
-		if (fullSerialize != nullptr)
-		{
-			for (auto& b : *fullSerialize)
-				b.Restore();
 		}
 	}
 }
@@ -917,7 +896,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 //
 //==========================================================================
 
-const char *FSerializer::GetOutput(unsigned *len, TArray<TObjPtr<DObject*>>* objs, TArray<FObjectBackup>* fullSerialize)
+const char *FSerializer::GetOutput(unsigned *len, TArray<TObjPtr<DObject*>>* objs, TArray<DObject*>* fullSerialize)
 {
 	if (isReading()) return nullptr;
 	if (objs != nullptr)
@@ -938,7 +917,7 @@ const char *FSerializer::GetOutput(unsigned *len, TArray<TObjPtr<DObject*>>* obj
 //
 //==========================================================================
 
-FCompressedBuffer FSerializer::GetCompressedOutput(TArray<TObjPtr<DObject*>>* objs, TArray<FObjectBackup>* fullSerialize)
+FCompressedBuffer FSerializer::GetCompressedOutput(TArray<TObjPtr<DObject*>>* objs, TArray<DObject*>* fullSerialize)
 {
 	if (isReading()) return{ 0,0,0,0,0,nullptr };
 	FCompressedBuffer buff;
