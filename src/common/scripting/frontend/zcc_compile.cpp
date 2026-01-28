@@ -1525,6 +1525,8 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		if (field->Flags & ZCC_ReadOnly) varflags |= VARF_ReadOnly;
 		if (field->Flags & ZCC_Internal) varflags |= VARF_InternalAccess;
 		if (field->Flags & ZCC_Transient) varflags |= VARF_Transient;
+		if (field->Flags & ZCC_NoRollback) varflags |= VARF_NoRollback;
+		const unsigned existingRollback = varflags & VARF_NoRollback;
 		if (mVersion >= MakeVersion(2, 4, 0))
 		{
 			if (type != nullptr)
@@ -1565,7 +1567,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		if (fc > 1)
 		{
 			Error(field, "Invalid combination of scope qualifiers %s on field %s", FlagsToString(excludeflags).GetChars(), FName(field->Names->Name).GetChars());
-			varflags &= ~(VARF_UI | VARF_Play | VARF_NoRollback); // make plain data
+			varflags &= ~(VARF_UI | VARF_Play | VARF_NoRollback) | existingRollback; // make plain data
 		}
 
 		if (field->Flags & ZCC_Meta)
