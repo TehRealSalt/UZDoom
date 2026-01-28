@@ -243,6 +243,22 @@ bool FSerializer::canWrite(DObject* obj) const
 //
 //==========================================================================
 
+bool FSerializer::MarkRollbackObject(DObject* obj)
+{
+	if (!isWriting() || !IsRollback() || obj == nullptr || (obj->ObjectFlags & OF_EuthanizeMe) || !canWrite(obj))
+		return false;
+	// This case should also return true in case something from earlier has already marked it.
+	if (w->mObjectMap.CheckKey(obj) == nullptr)
+		w->mObjectMap[obj] = w->mDObjects.Push(obj);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FSerializer::WriteKey(const char *key)
 {
 	if (isWriting() && w->inObject())

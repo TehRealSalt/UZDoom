@@ -110,6 +110,7 @@ public:
 		Close();
 	}
 	inline bool IsRollback() const { return bPredictionBackup; }
+	bool MarkRollbackObject(DObject* obj);
 	void SetUniqueSoundNames() { soundNamesAreUnique = true; }
 	bool OpenWriter(bool pretty = true, bool predicting = false);
 	bool OpenReader(const char *buffer, size_t length, bool predicting = false);

@@ -324,7 +324,18 @@ public:
 		_link = { act };
 	}
 
-	void PreRestore()
+	void PostBackup()
+	{
+		auto act = GetObject<AActor>();
+		if (act != nullptr)
+		{
+			// TODO: This needs to be handled properly in the rest of the physics code...
+			act->flags &= ~MF_PICKUP;
+			act->flags2 &= ~MF2_PUSHWALL;
+		}
+	}
+
+	void PreRollback()
 	{
 		auto act = GetObject<AActor>();
 		if (act == nullptr)
@@ -333,7 +344,7 @@ public:
 		act->UnlinkFromWorld(nullptr);
 	}
 
-	void Restore()
+	void PostRollback()
 	{
 		auto act = GetObject<AActor>();
 		if (act == nullptr)
@@ -1637,34 +1648,42 @@ static void P_RollbackObject(DObject* obj, FSerializer& arc)
 	if (obj == nullptr || (obj->ObjectFlags & (OF_EuthanizeMe | OF_NoRollback | OF_JustSpawned)))
 		return;
 
+	if (!arc.MarkRollbackObject(obj))
+		return;
+
 	auto act = dyn_cast<AActor>(obj);
 	if (act != nullptr)
 	{
 		PredictionData.RollbackActors.Push(FActorBackup{ *act });
 		if (act->player != nullptr && act->player->mo == act)
-		{
 			PredictionData.RollbackPlayers.Push(act->player - players);
-			act->player->Serialize(arc);
-		}
+
+		// TODO: In the future these will be automatically handled by the net owner system, but handle them
+		// manually for now to increase stability.
+		P_RollbackObject(act->ViewPos, arc);
+		P_RollbackObject(act->modelData, arc);
 	}
 	else
 	{
 		PredictionData.RollbackObjects.Push({ *obj });
 	}
+}
 
-	obj->Serialize(arc);
-	if (act != nullptr)
+static void P_RollbackPlayers(FSerializer& arc)
+{
+	if (!PredictionData.RollbackPlayers.Size() || !arc.BeginArray("players"))
+		return;
+
+	for (auto p : PredictionData.RollbackPlayers)
 	{
-		// TODO: In the future these will be automatically handled by the net owner system, but handle them
-		// manually for now to increase stability.
-		P_RollbackObject(act->ViewPos, arc);
-		P_RollbackObject(act->modelData, arc);
-
-		// TODO: This needs to be handled properly in the rest of the physics code...
-		act->flags &= ~MF_PICKUP;
-		act->flags2 &= ~MF2_PUSHWALL;
+		if (arc.BeginObject(nullptr))
+		{
+			players[p].Serialize(arc);
+			arc.EndObject();
+		}
 	}
-	obj->ObjectFlags |= OF_Predicting;
+
+	arc.EndArray();
 }
 
 void P_PredictClient()
@@ -1684,6 +1703,7 @@ void P_PredictClient()
 		{
 			FRandom::RollbackRNGState(writer);
 			P_RollbackObject(player->mo, writer);
+			P_RollbackPlayers(writer);
 			TArray<DObject*> fullRollback = {};
 			for (auto& a : PredictionData.RollbackActors)
 				fullRollback.Push(a.GetObject<DObject>());
@@ -1692,6 +1712,11 @@ void P_PredictClient()
 			PredictionData.RollbackData = writer.GetCompressedOutput(&PredictionData.RollbackObjectRefs, &fullRollback);
 			PredictionData.RollbackLevel = player->mo->Level;
 			writer.Close();
+
+			for (auto& a : PredictionData.RollbackActors)
+				a.PostBackup();
+			for (auto o : fullRollback)
+				o->ObjectFlags |= OF_Predicting;
 		}
 	}
 
@@ -1791,18 +1816,17 @@ void P_UnPredictClient()
 	if (reader.OpenReader(&PredictionData.RollbackData, true))
 	{
 		for (auto& a : PredictionData.RollbackActors)
-			a.PreRestore();
+			a.PreRollback();
 
 		FRandom::RollbackRNGState(reader);
 		reader.ReadObjectsFrom(PredictionData.RollbackObjectRefs);
 		if (reader.mObjectErrors)
 			I_Error("Failed to rollback game state");
-		for (auto p : PredictionData.RollbackPlayers)
-			players[p].Serialize(reader);
+		P_RollbackPlayers(reader);
 		reader.Close();
 
 		for (auto& a : PredictionData.RollbackActors)
-			a.Restore();
+			a.PostRollback();
 	}
 
 	PredictionData.ClearBackup();
