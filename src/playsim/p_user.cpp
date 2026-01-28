@@ -357,6 +357,7 @@ struct FPredictionData
 	TArray<TObjPtr<DObject*>> RollbackObjectRefs = {};	// Try and reuse existing Objects when deserializing.
 	TArray<FObjectBackup> RollbackObjects = {};			// If these Objects no longer exist, they must be recreated instead of left as a null pointer.
 	TArray<FActorBackup> RollbackActors = {};
+	TArray<size_t> RollbackPlayers = {};				// Store by index instead of pointer so it'll never be invalid when deserializing.
 	FLevelLocals* RollbackLevel = nullptr;				// Save this for when opening the reader.
 	FileSys::FCompressedBuffer RollbackData = {};		// Snapshot of all saved Objects.
 
@@ -377,6 +378,7 @@ struct FPredictionData
 		RollbackObjectRefs.Clear();
 		RollbackObjects.Clear();
 		RollbackActors.Clear();
+		RollbackPlayers.Clear();
 		RollbackLevel = nullptr;
 		RollbackData.Clean();
 	}
@@ -1640,7 +1642,10 @@ static void P_RollbackObject(DObject* obj, FSerializer& arc)
 	{
 		PredictionData.RollbackActors.Push(FActorBackup{ *act });
 		if (act->player != nullptr && act->player->mo == act)
+		{
+			PredictionData.RollbackPlayers.Push(act->player - players);
 			act->player->Serialize(arc);
+		}
 	}
 	else
 	{
@@ -1792,6 +1797,8 @@ void P_UnPredictClient()
 		reader.ReadObjectsFrom(PredictionData.RollbackObjectRefs);
 		if (reader.mObjectErrors)
 			I_Error("Failed to rollback game state");
+		for (auto p : PredictionData.RollbackPlayers)
+			players[p].Serialize(reader);
 		reader.Close();
 
 		for (auto& a : PredictionData.RollbackActors)
