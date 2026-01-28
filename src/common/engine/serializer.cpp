@@ -222,7 +222,7 @@ unsigned FSerializer::ArraySize()
 
 bool FSerializer::canSkip() const
 {
-	return isWriting() && w->inObject();
+	return !IsRollback() && isWriting() && w->inObject();
 }
 
 //==========================================================================
@@ -501,7 +501,7 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 {
 	if (isWriting())
 	{
-		if (w->inObject() && def != nullptr && *def == spritenum) return *this;
+		if (canSkip() && def != nullptr && *def == spritenum) return *this;
 		WriteKey(key);
 		w->Int(spritenum);
 	}
@@ -1010,7 +1010,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *def
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Bool(value);
@@ -1046,7 +1046,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Int64(value);
@@ -1082,7 +1082,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint6
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Uint64(value);
@@ -1119,7 +1119,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, int32_t &value, int32_
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Int(value);
@@ -1155,7 +1155,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, uint32_t &value, uint3
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Uint(value);
@@ -1244,7 +1244,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, double &value, double 
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->Double(value);
@@ -1295,7 +1295,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			if (!value.Exists())
 			{
@@ -1504,7 +1504,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			arc.w->String(value.GetChars());
@@ -1548,7 +1548,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 	}
 	else if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || def == nullptr || sid != *def)
+		if (!arc.canSkip() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
 			const char *sn = soundEngine->GetSoundName(sid);
@@ -1592,7 +1592,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || def == nullptr || clst != *def)
+		if (!arc.canSkip() || def == nullptr || clst != *def)
 		{
 			arc.WriteKey(key);
 			if (clst == nullptr)
@@ -1640,7 +1640,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || def == nullptr || pstr.Compare(*def) != 0)
+		if (!arc.canSkip() || def == nullptr || pstr.Compare(*def) != 0)
 		{
 			arc.WriteKey(key);
 			arc.w->String(pstr.GetChars());
@@ -1814,7 +1814,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &value, N
 {
 	if (arc.isWriting())
 	{
-		if (!arc.w->inObject() || defval == nullptr || value != *defval)
+		if (!arc.canSkip() || defval == nullptr || value != *defval)
 		{
 			arc.WriteKey(key);
 			switch (value.type)

@@ -349,6 +349,7 @@ public:
 	}
 };
 
+// Boon TODO: This needs to be cleared on error as well.
 struct FPredictionData
 {
 	bool bResetPrediction = false;

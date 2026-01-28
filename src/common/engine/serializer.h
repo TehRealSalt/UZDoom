@@ -164,13 +164,13 @@ public:
 	template<class T>
 	FSerializer &operator()(const char *key, T &obj, T &def)
 	{
-		return Serialize(*this, key, obj, IsRollback() ? nullptr : &def);
+		return Serialize(*this, key, obj, &def);
 	}
 
 	template<class T>
 	FSerializer& operator()(const char* key, T& obj, T* def)
 	{
-		return Serialize(*this, key, obj, !def || IsRollback() ? nullptr : def);
+		return Serialize(*this, key, obj, !def ? nullptr : def);
 	}
 
 	template<class T>
