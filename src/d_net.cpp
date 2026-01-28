@@ -362,6 +362,8 @@ public:
 	}
 } NetEvents;
 
+void P_ClearPredictionData();
+
 void Net_ClearBuffers()
 {
 	CloseNetwork();
@@ -386,7 +388,7 @@ void Net_ClearBuffers()
 			state.Tics[j].Data.SetData(nullptr, 0);
 	}
 
-	NetworkEntityManager::DisablePrediction();
+	P_ClearPredictionData();
 	NetBufferLength = 0u;
 	RemoteClient = -1;
 	MaxClients = TicDup = 1u;

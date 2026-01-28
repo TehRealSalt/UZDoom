@@ -349,7 +349,6 @@ public:
 	}
 };
 
-// Boon TODO: This needs to be cleared on error as well.
 struct FPredictionData
 {
 	bool bResetPrediction = false;
@@ -1620,6 +1619,15 @@ void P_LerpCalculate(AActor* pmo, const DVector3& from, DVector3 &result, float 
 void P_MarkRollbackObjects()
 {
 	PredictionData.Mark();
+}
+
+void P_ClearPredictionData()
+{
+	NetworkEntityManager::DisablePrediction();
+	PredictionData.ResetPos();
+	PredictionData.ClearBackup();
+	PredictionData.bResetPrediction = false;
+	PredictionData.LastPredictedTic = 0;
 }
 
 static void P_RollbackObject(DObject* obj, FSerializer& arc)
