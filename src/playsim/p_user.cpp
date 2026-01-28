@@ -1688,7 +1688,7 @@ static void P_RollbackPlayers(FSerializer& arc)
 
 void P_PredictClient()
 {
-	if (demoplayback || gamestate != GS_LEVEL)
+	if (gamestate != GS_LEVEL)
 		return;
 
 	player_t* player = &players[consoleplayer];
