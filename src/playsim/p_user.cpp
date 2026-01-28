@@ -321,8 +321,6 @@ struct FActorBackup : public FObjectBackup
 {
 private:
 	FPhysicsLinkBackup _link = {};
-	// Boon TODO: Add norollback key word to fix this.
-	TObjPtr<AActor*> _inv = MakeObjPtr<AActor*>(nullptr);
 public:
 	FActorBackup(AActor& act) : FObjectBackup(act)
 	{
@@ -336,8 +334,6 @@ public:
 			return;
 
 		act->UnlinkFromWorld(nullptr);
-		if (act->player != nullptr && act->player->mo == act)
-			_inv = act->PointerVar<AActor>(NAME_InvSel);
 	}
 
 	void Restore()
@@ -353,8 +349,6 @@ public:
 
 		act->renderflags &= ~RF_NOINTERPOLATEVIEW;
 		act->flags8 &= ~MF8_RECREATELIGHTS;
-		if (act->player != nullptr && act->player->mo == act)
-			act->PointerVar<AActor>(NAME_InvSel) = _inv;
 	}
 };
 
