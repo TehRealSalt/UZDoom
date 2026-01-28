@@ -1537,11 +1537,13 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 					varflags |= VARF_Play;
 			}
 			if (field->Flags & ZCC_UIFlag)
-				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI);
+				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_UI) | VARF_NoRollback;
 			if (field->Flags & ZCC_Play)
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_Play);
 			if (field->Flags & (ZCC_ClearScope | ZCC_UnsafeClearScope))
 				varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData);
+
+			varflags |= existingRollback;
 		}
 		else
 		{
@@ -1568,6 +1570,12 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		{
 			Error(field, "Invalid combination of scope qualifiers %s on field %s", FlagsToString(excludeflags).GetChars(), FName(field->Names->Name).GetChars());
 			varflags &= ~(VARF_UI | VARF_Play | VARF_NoRollback) | existingRollback; // make plain data
+		}
+
+		if (!(varflags & VARF_Native) && (varflags & (VARF_Play | VARF_NoRollback)) == (VARF_Play | VARF_NoRollback))
+		{
+			Error(field, "norollback cannot be used with play-scoped fields");
+			varflags &= ~VARF_NoRollback;
 		}
 
 		if (field->Flags & ZCC_Meta)
