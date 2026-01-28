@@ -2177,7 +2177,6 @@ void TryRunTics()
 		if (ClientTic > startCommand)
 		{
 			LagState = LAG_PREDICTING;
-			P_UnPredictClient();
 			P_PredictClient();
 		}
 
