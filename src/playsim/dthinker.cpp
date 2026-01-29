@@ -815,10 +815,8 @@ void DThinker::OnDestroy()
 void DThinker::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
-	arc("level", Level);
-	// Since the list isn't backed up this won't relink properly, so make sure it keeps its stat num.
-	if (!arc.IsRollback())
-		arc("statnum", _statNum);
+	arc("level", Level)
+		("statnum", _statNum);
 }
 
 //==========================================================================

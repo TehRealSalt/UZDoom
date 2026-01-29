@@ -633,6 +633,8 @@ void DObject::Serialize(FSerializer &arc)
 	SerializeFlag("networked", OF_Networked);
 	SerializeFlag("clientside", OF_ClientSide);
 	SerializeFlag("travelling", OF_Travelling);
+	SerializeFlag("transient", OF_Transient);	// This is needed for rollbacks.
+	SerializeFlag("norollback", OF_NoRollback);
 		
 	ObjectFlags |= OF_SerialSuccess;
 
