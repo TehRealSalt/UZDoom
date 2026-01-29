@@ -82,6 +82,11 @@ void SetObjectFlagsFromScope(DObject* obj)
 		else if (side == FScopeBarrier::Side_UI)
 			obj->ObjectFlags |= OF_ClientSide | OF_NoRollback;
 	}
+	else
+	{
+		// For anything without a scope, just assume it's data scoped.
+		obj->ObjectFlags |= OF_ClientSide;
+	}
 }
 
 //==========================================================================

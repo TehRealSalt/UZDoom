@@ -1645,9 +1645,6 @@ void P_ClearPredictionData()
 
 static void P_RollbackObject(DObject* obj, FSerializer& arc)
 {
-	if (obj == nullptr || (obj->ObjectFlags & (OF_EuthanizeMe | OF_NoRollback | OF_JustSpawned)))
-		return;
-
 	if (!arc.MarkRollbackObject(obj))
 		return;
 
@@ -1721,7 +1718,7 @@ void P_PredictClient()
 	}
 
 	player->cheats |= CF_PREDICTING; // This is only here for backwards compat.
-	if (ClientTic <= PredictionData.LastPredictedTic || player->playerstate != PST_LIVE)
+	if (ClientTic <= PredictionData.LastPredictedTic || player->playerstate != PST_LIVE || (player->mo->ObjectFlags & OF_JustSpawned))
 		return;
 
 	// This essentially acts like a mini P_Ticker where only the stuff relevant to the client is actually
