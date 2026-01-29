@@ -319,6 +319,7 @@ struct FActorBackup : public FObjectBackup
 private:
 	FPhysicsLinkBackup _link = {};
 	int _statNum = -1;
+	int _tid = INT_MAX;
 public:
 	FActorBackup(AActor& act) : FObjectBackup(act)
 	{
@@ -342,10 +343,11 @@ public:
 		if (act == nullptr)
 			return;
 
-		// Thinkers won't relink properly on rollback so we need to keep the old stat num as
-		// it was. This still needs to be serialized in case the Thinker was destroyed so we
+		// These won't relink properly on rollback so we need to keep the old values as
+		// they were. This still needs to be serialized in case the Actor was destroyed so we
 		// can relink it back in properly after it's been recreated.
 		_statNum = act->GetStatNum();
+		_tid = act->tid;
 		act->UnlinkFromWorld(nullptr);
 	}
 
@@ -359,6 +361,17 @@ public:
 			act->ChangeStatNum(act->GetStatNum());
 		else
 			act->RollbackStatNum(_statNum);
+
+		if (_tid == INT_MAX)
+		{
+			_tid = act->tid;
+			act->tid = 0;
+			act->SetTID(_tid);
+		}
+		else
+		{
+			act->tid = _tid;
+		}
 
 		act->LinkToWorld(nullptr);
 		// TODO: This might cause issues with emulating undefined behavior regarding things like polyobject collisions? Will need to be
