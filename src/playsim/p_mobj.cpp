@@ -275,7 +275,6 @@ void AActor::Serialize(FSerializer &arc)
 		A("skillrespawncount", skillrespawncount)
 		("tracer", tracer)
 		A("floorclip", Floorclip)
-		A("tid", tid)
 		A("special", special)
 		A("accuracy", accuracy)
 		A("stamina", stamina)
@@ -408,7 +407,8 @@ void AActor::Serialize(FSerializer &arc)
 
 		if (!arc.IsRollback())
 		{
-			arc("userlights", UserLights, def->UserLights);
+			arc("userlights", UserLights, def->UserLights)
+				A("tid", tid);
 		}
 }
 
