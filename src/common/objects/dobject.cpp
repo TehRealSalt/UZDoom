@@ -777,19 +777,37 @@ DObject* NetworkEntityManager::GetNetworkEntity(const uint32_t id)
 void NetworkEntityManager::AddPredictedEntity(DObject* ent)
 {
 	if (IsPredicting() && !ent->IsClientSide() && !ent->IsPredicted())
+		s_problemEntities.Push(ent);
+}
+
+void NetworkEntityManager::VerifyPredictedEntities()
+{
+	for (auto e : s_problemEntities)
 	{
-		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Spawned non-client-side Object %s while predicting\n", ent->GetClass()->TypeName.GetChars());
-		ent->SetPredicted(true);
-		s_predictedEntities.Push(ent);
+		if (e->ObjectFlags & (OF_EuthanizeMe | OF_Sentinel))
+			continue;
+
+		DPrintf(DMSG_WARNING, TEXTCOLOR_RED "Spawned non-client-side Object %s while predicting\n", e->GetClass()->TypeName.GetChars());
+		e->SetPredicted(true);
+		s_predictedEntities.Push(e);
 	}
+
+	s_problemEntities.Clear();
 }
 
 void NetworkEntityManager::RemovePredictedEntity(DObject* ent)
 {
-	if (IsPredicting() && ent->IsPredicted())
+	if (IsPredicting())
 	{
-		ent->SetPredicted(false);
-		s_predictedEntities.Delete(s_predictedEntities.Find(ent));
+		if (ent->IsPredicted())
+		{
+			ent->SetPredicted(false);
+			s_predictedEntities.Delete(s_predictedEntities.Find(ent));
+		}
+		else if (!ent->IsClientSide())
+		{
+			s_problemEntities.Delete(s_problemEntities.Find(ent));
+		}
 	}
 }
 
@@ -800,6 +818,7 @@ void NetworkEntityManager::EnablePrediction()
 
 void NetworkEntityManager::DisablePrediction()
 {
+	VerifyPredictedEntities();
 	while (s_predictedEntities.Size())
 	{
 		TArray<DObject*> ents = {};
@@ -807,11 +826,10 @@ void NetworkEntityManager::DisablePrediction()
 		for (auto ent : ents)
 		{
 			if (!(ent->ObjectFlags & OF_EuthanizeMe))
-			{
-				ent->SetPredicted(false);
 				ent->Destroy();
-			}
 		}
+
+		VerifyPredictedEntities();
 	}
 
 	s_bClientPredicting = false;

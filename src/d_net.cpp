@@ -2188,7 +2188,10 @@ void TryRunTics()
 			P_RunClientSideLogic();
 
 		if (totalTics > 0)
+		{
 			S_UpdateSounds(players[consoleplayer].camera, primaryLevel->LocalWorldTimer - min<int>(primaryLevel->LocalWorldTimer, worldTimer));
+			NetworkEntityManager::VerifyPredictedEntities();
+		}
 
 		return;
 	}
@@ -2234,6 +2237,7 @@ void TryRunTics()
 	// Since the level could get reset mid-tick, make sure the smaller of the two values is used
 	// since it should only go up otherwise.
 	S_UpdateSounds(players[consoleplayer].camera, primaryLevel->LocalWorldTimer - min<int>(primaryLevel->LocalWorldTimer, worldTimer));
+	NetworkEntityManager::VerifyPredictedEntities();
 }
 
 void Net_NewClientTic()

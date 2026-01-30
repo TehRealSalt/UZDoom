@@ -471,6 +471,7 @@ private:
 	inline static bool s_bClientPredicting = false;
 	inline static TArray<DObject*> s_netEntities = {};
 	inline static TArray<uint32_t> s_openNetIDs = {};
+	inline static TArray<DObject*> s_problemEntities = {};
 	inline static TArray<DObject*> s_predictedEntities = {};
 
 public:
@@ -486,6 +487,7 @@ public:
 	static void RemoveNetworkEntity(DObject* const ent);
 	static DObject* GetNetworkEntity(const uint32_t id);
 	static void AddPredictedEntity(DObject* ent);
+	static void VerifyPredictedEntities();
 	static void RemovePredictedEntity(DObject* ent);
 	static void EnablePrediction();
 	static void DisablePrediction();
