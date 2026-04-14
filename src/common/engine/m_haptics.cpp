@@ -22,6 +22,7 @@
 #include "c_dispatch.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "i_system.h"
 #include "m_haptics.h"
 #include "name.h"
 #include "printf.h"
@@ -441,6 +442,17 @@ void Joy_ReadyRumbleMapping()
 void Joy_RumbleTick()
 {
 	if (!Haptics.enabled) return;
+
+	if (I_GetLastUsedDevice() == DEVICE_KBM)
+	{
+		// no haptics while using keyboard + mouse
+
+		// TODO: probably save the device and only
+		// do this on value change, instead of
+		// blasting every frame
+		I_Rumble(0, 0, 0, 0);
+		return;
+	}
 
 	// pause detection
 	if (AppActive != Haptics.active)

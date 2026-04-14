@@ -90,4 +90,7 @@ FString I_GetCWD();
 bool I_ChDir(const char* path);
 void I_OpenShellFolder(const char*);
 
+
+int I_GetLastUsedDevice();
+
 #endif

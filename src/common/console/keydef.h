@@ -243,3 +243,11 @@ static const int KeyAxisMapping[NUM_AXIS_CODES] = {
 	KEY_PAD_RTRIGGER,
 };
 
+
+enum EKeyDeviceTypes
+{
+	DEVICE_KBM, // Keyboard / mouse
+	DEVICE_JOY, // DInput Joystick
+	DEVICE_PAD, // XInput Gamepad
+	DEVICE__MAX
+};

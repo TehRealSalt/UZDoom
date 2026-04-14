@@ -242,6 +242,13 @@ static void I_CheckGUICapture ()
 	}
 }
 
+static int g_LastUsedDeviceType = DEVICE_KBM;
+
+int I_GetLastUsedDevice()
+{
+	return g_LastUsedDeviceType;
+}
+
 void I_SetMouseCapture()
 {
 	// Clear out any mouse movement.
@@ -376,6 +383,12 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
 		if (joykey_stop_conflict > 0 && sev.type == SDL_MOUSEBUTTONDOWN) break;
+
+		if (sev.type == SDL_MOUSEBUTTONDOWN)
+		{
+			g_LastUsedDeviceType = DEVICE_KBM;
+		}
+
 		if (!GUICapture)
 		{
 			event.type = sev.type == SDL_MOUSEBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
@@ -446,6 +459,9 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_MOUSEMOTION:
 		if (joykey_stop_conflict > 0) break;
+
+		//g_LastUsedDeviceType = DEVICE_KBM;
+
 		if (GUICapture)
 		{
 			event.data1 = sev.motion.x;
@@ -467,6 +483,9 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_MOUSEWHEEL:
 		if (joykey_stop_conflict > 0) break;
+
+		g_LastUsedDeviceType = DEVICE_KBM;
+
 		if (GUICapture)
 		{
 			event.type = EV_GUI_Event;
@@ -501,6 +520,12 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
 		if (joykey_stop_conflict > 0 && sev.type == SDL_KEYDOWN) break;
+
+		if (sev.type == SDL_KEYDOWN)
+		{
+			g_LastUsedDeviceType = DEVICE_KBM;
+		}
+
 		if (!GUICapture)
 		{
 			if (sev.key.repeat)
@@ -588,6 +613,9 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_TEXTINPUT:
 		if (joykey_stop_conflict > 0 && sev.type == SDL_TEXTINPUT) break;
+
+		//g_LastUsedDeviceType = DEVICE_KBM;
+
 		if (GUICapture)
 		{
 			int size;
@@ -608,6 +636,12 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_JOYBUTTONUP:
 		if (SDL_GameControllerFromInstanceID(sev.jdevice.which))
 			break; // let SDL_CONTROLLERBUTTON* handle this
+
+		if (sev.type == SDL_JOYBUTTONDOWN)
+		{
+			g_LastUsedDeviceType = DEVICE_JOY;
+		}
+
 		event.type = sev.type == SDL_JOYBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		event.data1 = KEY_FIRSTJOYBUTTON + sev.jbutton.button;
 		if(event.data1 != 0)
@@ -616,6 +650,11 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_CONTROLLERBUTTONDOWN:
 	case SDL_CONTROLLERBUTTONUP:
+		if (sev.type == SDL_CONTROLLERBUTTONDOWN)
+		{
+			g_LastUsedDeviceType = DEVICE_PAD;
+		}
+
 		event.type = sev.type == SDL_CONTROLLERBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
 		switch (sev.cbutton.button)
 		{
