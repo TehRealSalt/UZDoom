@@ -2502,10 +2502,13 @@ static void CheckEpisodeCmd()
 
 static void CheckDefaultSkill()
 {
-	// Change skill cvar default to this game's defaultskill
-	UCVarValue val;
-	val.Int = DefaultSkill;
-	gameskill->SetGenericRepDefault(val, CVAR_Int);
+	if (DefaultSkill >= 0)
+	{
+		// Change skill cvar default to this game's defaultskill
+		UCVarValue val;
+		val.Int = DefaultSkill;
+		gameskill->SetGenericRepDefault(val, CVAR_Int);
+	}
 
 	if (setskill >= 0)
 	{
