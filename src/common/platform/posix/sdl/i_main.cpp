@@ -196,6 +196,9 @@ int main (int argc, char **argv)
 
 	setlocale (LC_ALL, "C");
 
+	// Use SDL_HINT_APP_ID once switched to SDL3
+	SDL_setenv("SDL_VIDEO_X11_WMCLASS", APPID, false);
+
 	if (SDL_Init (0) < 0)
 	{
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());

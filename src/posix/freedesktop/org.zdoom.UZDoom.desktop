@@ -5,6 +5,7 @@ Icon=org.zdoom.UZDoom
 Categories=Game;Shooter;
 Exec=uzdoom %F
 StartupNotify=true
+StartupWMClass=org.zdoom.UZDoom
 PrefersNonDefaultGPU=true
 Terminal=false
 Type=Application
